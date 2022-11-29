@@ -1,0 +1,40 @@
+
+Data Processing in Magenta
+
+Pipelines: data processing module that transforms input data types to output data types, all pipelines implement abstract class Pipeline
+
+Each pipeline defines what its input and output look like
+
+Pipeline can take as input object or dictionary mapping names to inputs
+
+
+Pipeline has two methods:
+
+	transform(input_object) converts a single input to one or many outputs.
+		
+		transform(input_object)
+		- runs the pipeline on the given input	
+
+	get_stats() returns statistics (see Statistic objects below) about each call to transform.
+
+
+And three important properties (class attributes):
+
+	self.input_type is the type signature that the pipeline expects for its inputs.
+	
+	self.output_type is the type signature of the pipeline's outputs.
+		
+		transform(input_object) takes in an object of type self.input_type
+		and outputs a list of objects which are all of type self.output_type
+
+		for ex: we could have self.input_type be of type midi, and have self.output_type be of type note_sequences to get out a list of note sequences
+	
+	name is a unique string name of the pipeline. This is used as a namespace for Statistic 		objects the Pipeline produces.
+
+Pipeline transforms A to B, but gonna use DAGPipeline - which takes directed acyclic graph, visualization of it, another organizational method perhaps, this thing is associated with this thing that leads to this thing, related things, a representation of multiple pipelines
+
+
+A pipeline can be run over a dataset using run_pipeline_serial, or load_pipeline. run_pipeline_serial saves the output to disk (saves it to your local machine)
+
+
+load_pipeline keeps the output in memory

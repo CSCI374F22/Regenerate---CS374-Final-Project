@@ -38,3 +38,5 @@ A pipeline can be run over a dataset using run_pipeline_serial, or load_pipeline
 
 
 load_pipeline keeps the output in memory
+
+creating the dataset is the same for all models, but generation, and training is different so in order to understand that for MusicVAE, we can read this: https://github.com/magenta/magenta/tree/main/magenta/models/music_vae

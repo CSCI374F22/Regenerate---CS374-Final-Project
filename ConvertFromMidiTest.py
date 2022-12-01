@@ -17,6 +17,8 @@ from note_seq import musicxml_reader
 import tensorflow.compat.v1 as tf
 
 def main():
+    tf.logging.set_verbosity(tf.logging.INFO)
+
     path = '/Users/hannah/Documents/cs374/Final Proj/Regenerate---CS374-Final-Project'
     input_dir = path + '/Piano E-Competition 2011 (3)'
     tmp = path + '/tmp'

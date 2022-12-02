@@ -128,8 +128,9 @@ def main():
     all_keys.append(('A# min', get_correlation_coefficient(A_sharp_min_list)))
     all_keys.append(('B min', get_correlation_coefficient(B_min_list)))
 
-
+    # Find key with highest correlation
     R = max(all_keys, key=lambda tup: tup[1])
+    
     print(R)
 
 # return a scale of a pitch class like the C# one: ['C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C']

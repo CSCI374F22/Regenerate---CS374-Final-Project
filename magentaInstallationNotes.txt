@@ -1,0 +1,9 @@
+Instructions
+
+
+
+conda create -n magenta    							                    creates a new condo environment called ml
+conda activate magenta or source activate magenta		        activates environment (conda activate ml) should show up as (magenta) 
+conda uninstall python					
+conda install python=3.5.2 (3.7.15 or lower is also fine)
+pip install magenta									                        should say successfully installed

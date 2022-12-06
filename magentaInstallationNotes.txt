@@ -7,3 +7,6 @@ conda activate magenta or source activate magenta		        activates environment
 conda uninstall python					
 conda install python=3.5.2 (3.7.15 or lower is also fine)
 pip install magenta									                        should say successfully installed
+
+
+use iterm or some other terminal, NEVER VSCode's terminal

@@ -9,17 +9,20 @@ from magenta.models.polyphony_rnn import polyphony_rnn_pipeline
 from note_seq.protobuf import music_pb2
 import tensorflow
 from mido import MidiFile
+from magenta.contrib import training as contrib_training
 
 import magenta.scripts.convert_dir_to_note_sequences as scripts
 import os
-
+import note_seq
 from note_seq import abc_parser
 from note_seq import midi_io
 from note_seq import musicxml_reader
 import tensorflow.compat.v1 as tf
+from note_seq import testing_lib
 
 from magenta.models.polyphony_rnn import polyphony_model
 from magenta.models.shared import events_rnn_graph
+from magenta.models.shared import events_rnn_model
 from magenta.models.shared import events_rnn_train
 
 from magenta.models.polyphony_rnn import polyphony_model
@@ -137,7 +140,7 @@ def main():
         eval_ratio=FLAGS.eval_ratio,
         config=polyphony_model.default_configs['polyphony']) # returns pipeline instance which creates the RNN dataset (partitions data into training and test/eval)
 
-    polyphony_output_dir = path + '/tmp/polyphony_rnn/sequence_examples'
+    polyphony_output_dir = path + '/tmp/polyphony_rnn/sequence_examples/'
     
     # input will now be the tfrecord file containin ghe notesequences
     polyphony_input_dir = output_dir
@@ -171,6 +174,7 @@ def main():
     #successful up to this point
     
     #eval_dir = polyphony_output_dir + 'eval_poly_tracks.tfrecord'
+    #tf.data.TFRecordDataset(path)
 
     # the TFRecord file of SequenceExamples that will be fed to the model (training data)
     sequence_example_dir = polyphony_output_dir + 'training_poly_tracks.tfrecord'
@@ -183,21 +187,43 @@ def main():
 
     # Returns a function that builds the TensorFlow graph.
     # mode: 'train', 'eval', or 'generate'. Only mode related ops are added to the graph
-    build_graph_fn = events_rnn_graph.get_build_graph_fn(
-      'train', polyphony_model.default_configs['polyphony'], sequence_example_dir)
+    # sequence_example_file_paths: A list of paths to TFRecord files containing
+        # tf.train.SequenceExample protos. Only needed for training and
+        # evaluation
+
+    # got this https://github.com/magenta/magenta/blob/main/magenta/models/shared/events_rnn_graph_test.py
+    
+    config = events_rnn_model.EventSequenceRnnConfig(
+        None,
+        note_seq.OneHotEventSequenceEncoderDecoder(
+            testing_lib.TrivialOneHotEncoding(12)),
+        contrib_training.HParams(
+            batch_size=128,
+            rnn_layer_sizes=[128, 128],
+            dropout_keep_prob=0.5,
+            clip_norm=5,
+            learning_rate=0.01))
+    # code referenced from https://github.com/magenta/magenta/blob/main/magenta/models/shared/events_rnn_graph_test.py
+    with tf.Graph().as_default():
+        build_graph_fn = events_rnn_graph.get_build_graph_fn(
+            'train', config, 
+            sequence_example_file_paths=[sequence_example_dir])
 
     # make directory
     tf.gfile.MakeDirs(training_dir)
     # add logs
     tf.logging.info('Train dir: %s', training_dir)
 
-    # train model
-    #training(False, build_graph_fn, training_dir)
+    # train model #this causes error
+    training(False, build_graph_fn, training_dir)
+    tf.logging.info('build graph fn info: ', build_graph_fn)
 
     # set test to true, so now goes through testing / eval data and evaluates model
     #test = True
     # now eval is true so will run testing / evaluation of model
-    #testing(True, build_graph_fn, training_dir, eval_dir, sequence_example_dir)
+    testing(True, build_graph_fn, training_dir, eval_dir, sequence_example_dir)
+
+    # stalls 
 
 def training(test, build_graph_fn, train_dir):
     if not test:  # if eval is false then will run training (eval always starts off as false)

@@ -67,7 +67,9 @@ def main():
     tf.logging.set_verbosity(tf.logging.INFO)
     # path to directory of midi files
     #midi_file_list = []
-    path = '/Users/hannah/Documents/cs374/Final Proj/Regenerate---CS374-Final-Project'
+    path = os.getcwd()
+    print()
+    print("current path: ", path)
     #dir_list = os.listdir(path)
     #counter = 0
     #open(dir_list[0])
@@ -96,6 +98,10 @@ def main():
         output = MyPipeline.transform(midi_file)
         print(output) """
             
+    # go up one directory back to home github
+    os.chdir("..")
+    path = os.getcwd() # update path
+    print("updated path: ", path)
 
     input_dir = path + '/Piano E-Competition 2011 (3)'
     tmp = path + '/tmp'
@@ -111,7 +117,7 @@ def main():
 
     # Converts files to NoteSequences and writes output to notesequences.tfrecord
     # for all models creating the dataset is the same
-    scripts.convert_directory(input_dir, output_dir, False) # false means no recursion, recursive = False, want recursive = True, when there are folders inside the directory containing relevant midi
+    scripts.convert_directory(input_dir, output_dir, True) # false means no recursion, recursive = False, want recursive = True, when there are folders inside the directory containing relevant midi
 
     # create SequenceExamples, which are fed into the model during training and evaluation aka testing
     # Sequence Examples contain sequence of inputs and a sequence of labels that represent a polyphonic sequence

@@ -70,9 +70,9 @@ def scan(filename):
     return note_dict
 
 #pass in the name of the midi file without the .mid extension
-def main():
+""" def main():
     filename = sys.argv[1]
     note_dict = scan(filename)
-    print(note_dict)
+    print(note_dict) """
 
-main()
+#main()

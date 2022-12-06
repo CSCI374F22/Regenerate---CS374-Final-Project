@@ -18,13 +18,14 @@ major_profile = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.2
 # same but for minor
 minor_profile = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
 
-filename = sys.argv[1] # needs a whole file path
+#filename = sys.argv[1] # needs a whole file path
 #print()
 #print(os.getcwd())
-pitch_classes = get_durations.scan(filename)
 
-def main():
 
+def get_key(filename):
+
+    pitch_classes = get_durations.scan(filename)
     
 
     # Alim is making function to find total durations of each pitch class in midi
@@ -138,8 +139,8 @@ def main():
 
     # Find key with highest correlation
     R = max(all_keys, key=lambda tup: tup[1])
-    
-    print(R)
+    #print(R)
+    return R
 
 # return a scale of a pitch class like the C# one: ['C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C']
 def get_key_list(starting_note):
@@ -234,5 +235,5 @@ def mean(L, first):
 
 
 
-main()
+#get_key('/Users/hannah/Documents/cs374/Final Proj/Regenerate---CS374-Final-Project/PianoCompetitionMidi/Piano E-Competition 2011 (2)/Shychko_A_SMF/Shychko04.MID')
 

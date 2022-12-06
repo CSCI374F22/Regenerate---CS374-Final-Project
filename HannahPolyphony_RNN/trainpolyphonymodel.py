@@ -223,7 +223,7 @@ def main():
     # now eval is true so will run testing / evaluation of model
     testing(True, build_graph_fn, training_dir, eval_dir, sequence_example_dir)
 
-    # stalls 
+    # stalls here: INFO:tensorflow:Calling checkpoint listeners after saving checkpoint 0...
 
 def training(test, build_graph_fn, train_dir):
     if not test:  # if eval is false then will run training (eval always starts off as false)

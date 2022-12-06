@@ -63,12 +63,16 @@ def scan(filename):
                 note_dict['G#'] += msg.time
     
     #in lieu of returning 
-    for note in note_dict.keys():
+    """ for note in note_dict.keys():
         print(note,":",note_dict[note])
+    print() """
+    
+    return note_dict
 
 #pass in the name of the midi file without the .mid extension
 def main():
-    filename = sys.argv[1] + ".mid"
-    scan(filename)
+    filename = sys.argv[1]
+    note_dict = scan(filename)
+    print(note_dict)
 
 main()

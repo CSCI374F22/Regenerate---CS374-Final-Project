@@ -1,6 +1,10 @@
 # keyfindingalg.py
 
 import math
+import mido
+import get_durations
+import sys
+import os
 
 # Krumhansl-Schmuckler key-finding algorithm, explained here http://rnhart.net/articles/key-finding/
 
@@ -14,13 +18,17 @@ major_profile = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.2
 # same but for minor
 minor_profile = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
 
+filename = sys.argv[1] # needs a whole file path
+#print()
+#print(os.getcwd())
+pitch_classes = get_durations.scan(filename)
+
 def main():
 
     
 
     # Alim is making function to find total durations of each pitch class in midi
-    pitch_classes = {}
-
+    #pitch_classes = {}
 
     # using this to check if works
     # { C: 432
@@ -36,7 +44,7 @@ def main():
     #   A# : 191  
     #   B : 1  }
 
-    pitch_classes['C'] = 432
+    """ pitch_classes['C'] = 432
     pitch_classes['C#'] = 231
     pitch_classes['D'] = 0
     pitch_classes['D#'] = 405
@@ -47,7 +55,7 @@ def main():
     pitch_classes['G#'] = 612
     pitch_classes['A'] = 0
     pitch_classes['A#'] = 191
-    pitch_classes['B'] = 1
+    pitch_classes['B'] = 1"""
 
     C = base_scale
     C_sharp = get_key_list('C#')

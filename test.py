@@ -9,7 +9,7 @@ import os
 #INPUT_DIRECTORY=<folder containing MIDI and/or MusicXML files. can have child folders.>
 path = os.getcwd() # get current working directory
 
-INPUT_DIRECTORY=path + '/Piano E-Competition 2011 (3)'
+INPUT_DIRECTORY=path + '/PianoCompetitionMidi'
 # TFRecord file that will contain NoteSequence protocol buffers.
 SEQUENCES_TFRECORD=path + '/tmp/notesequences.tfrecord'
 

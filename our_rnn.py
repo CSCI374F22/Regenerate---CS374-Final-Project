@@ -74,9 +74,12 @@ def main():
                     # get chord name
                     chord_name = chord[0]
                     # encoding array
+
+                    # depending on how we're using the one hot encoding it might be better to not use this
+                    # way since it makes things really long
                     one_hot = enc.events_to_input([chord_name], 0)
                     arr.append(one_hot)
-                    print(arr)
+                    print("array now: ", arr)
 
                 file_name_to_seq_encoding[filepath] = arr
     print(file_name_to_seq_encoding) 

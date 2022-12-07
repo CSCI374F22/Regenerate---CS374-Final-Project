@@ -26,9 +26,14 @@ def main():
 
     # define a dictionary that holds file names as keys and their note sequence encodings as values
     file_name_to_seq_encoding = dict()
+
+
+    chord_dict = dict()
+
     for (root,dirs,files) in os.walk(input_dir, topdown=True):
         # need all root, dirs, files in order to get the files alone
         # loop though all the files
+        filename_chord_list = []
         for filename in files:
             #print(filename)
             if len(dirs) == 0:
@@ -36,6 +41,10 @@ def main():
                 
                 # convert midi file to note seq
                 note_sequence = midi_io.midi_file_to_note_sequence(filepath)
+
+
+                # trim note sequence
+                subsequence = sequences_lib.trim_note_sequence(note_sequence, 0, 60)
 
                 # referenced https://github.com/magenta/note-seq/blob/a7ea6b3ce073b0791fc5e89260eae8e621a3ba0c/note_seq/sequences_lib.py#L988
                 """Quantize a NoteSequence proto relative to tempo.
@@ -53,7 +62,7 @@ def main():
 
                 # quantize note sequence
                 quantized_sequence = sequences_lib.quantize_note_sequence(
-                note_sequence, steps_per_quarter=4)
+                subsequence, steps_per_quarter=4)
                 # infer chords
                 chord_inference.infer_chords_for_sequence(
                     quantized_sequence)
@@ -77,15 +86,51 @@ def main():
 
                     # depending on how we're using the one hot encoding it might be better to not use this
                     # way since it makes things really long
-                    one_hot = enc.events_to_input([chord_name], 0)
-                    arr.append(one_hot)
-                    print("array now: ", arr)
+                    encoding = enc.events_to_input([chord_name], 0)
+                    formatted_encoding = chord_formatting(encoding)
+                    print(formatted_encoding)
+                    arr.append(formatted_encoding)
+                    #print("array now: ", arr)
 
-                file_name_to_seq_encoding[filepath] = arr
-    print(file_name_to_seq_encoding) 
+                    chord_dict[chord_name] = formatted_encoding
+                    filename_chord_list.append(chord_name)
+                
+
+                file_name_to_seq_encoding[filepath] = filename_chord_list
+
+            print()
+            print('-------------------------')
+            print()
+    #print(file_name_to_seq_encoding) 
+
+    for key in file_name_to_seq_encoding:
+        print(key, " : ")
+        print(file_name_to_seq_encoding[key])
+        print("------------------")
 
 
     
+def chord_formatting(arr):
+    is_chord = arr[0] # if 0 is chord, if 1 is not chord
+    # skip first row and loop from 13th item till end
+    res = []
+    
+    #notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    chord_members = arr[13: 25] # gets middle row of chord_members
+    
+    # iterate through remaining arr and get index of bass note
+    index_of_bass_note = arr[25:].index(1.0)
+
+    chord_members[index_of_bass_note] = 1.0
+
+    res.append(is_chord)
+    res.extend(chord_members)
+
+    return res
+
+
+
+
 main()
 
 

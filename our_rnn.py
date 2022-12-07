@@ -13,7 +13,7 @@ import os
 from note_seq import sequences_lib # https://github.com/magenta/note-seq/blob/a7ea6b3ce073b0791fc5e89260eae8e621a3ba0c/note_seq/chord_inference.py for quantization of note_seq
 from note_seq import chords_encoder_decoder
 
-def main():
+def prepreocessing():
     tf.logging.set_verbosity(tf.logging.INFO)
     main_github_dir = os.getcwd() # get cwd
     input_dir = main_github_dir + '/PianoCompetitionMidi/' # get midi folder
@@ -88,7 +88,7 @@ def main():
                     # way since it makes things really long
                     encoding = enc.events_to_input([chord_name], 0)
                     formatted_encoding = chord_formatting(encoding)
-                    print(formatted_encoding)
+                    #print(formatted_encoding)
                     arr.append(formatted_encoding)
                     #print("array now: ", arr)
 
@@ -98,9 +98,6 @@ def main():
 
                 file_name_to_seq_encoding[filepath] = filename_chord_list
 
-            print()
-            print('-------------------------')
-            print()
     #print(file_name_to_seq_encoding) 
 
     for key in file_name_to_seq_encoding:
@@ -131,6 +128,6 @@ def chord_formatting(arr):
 
 
 
-main()
+prepreocessing()
 
 

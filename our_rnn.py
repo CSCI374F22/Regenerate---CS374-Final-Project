@@ -18,6 +18,9 @@ import pandas as pd
 SEQ_LEN = 25
 NUM_MIDI_VALS = 128
 
+# define batch size
+BATCH_SIZE = 64
+
 def prepreocessing():
     tf.logging.set_verbosity(tf.logging.INFO)
     main_github_dir = os.getcwd() # get cwd
@@ -57,33 +60,24 @@ def prepreocessing():
                 # getting large collection of all the notes in all files
                 all_notes.append(notes)
 
-                # gets the transpose of the array, giving us full list of all pitches, steps, and durations
-                #train_notes = np.stack([all_notes[all_notes.index(key)] for key in key_order], axis=1)
-                
-                # translate list of notes to be formatted as pitch, step, duration
-
-                #notes_ds = tf.data.Dataset.from_tensor_slices(train_notes)
-                #notes_ds.element_spec
-
-                # copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=mvNHCHZdXG2P
-                # TODO: below is all copy pasted
-
-
                 n_notes = len(all_notes)
-                #print('Number of notes parsed:', n_notes)
-
-                #all_notes_np = np.array(all_notes)
-                #print(series)
-                #print(series[0].loc['pitch'])
-                #pitch_step_duration_all_notes = []
-                #for i in range(len(all_notes_np)):
-                    #pitch = all_notes_np[i].loc()
 
                 sequence = format_data(all_notes)
 
                 shorter_seq = sequence[:SEQ_LEN]
 
+                # Format dataset further by creating batches
+                # batches allow us to pass in multiple instances of the training set at one, faster overall
+
+                num_dataset_items = n_notes - SEQ_LEN # number of items in dataset
+
+                # shuffle the dataset to be random, and create batches
+
+
                 #print(shorter_seq)
+
+                # Create model, copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=kNaVWcCzAm5V
+                # TODO: below is all copy pasted
 
                 input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
                 #print(input_shape)
@@ -219,7 +213,7 @@ def format_data(all_notes):
 # separate sequences into labels and inputs
 # sequences represent all the note sequences
 # a single sequence is 1 note sequence
-def separate_labels(sequences):
+def separate_labels(sequences): # need to put labels within the sequences list
     inputs = sequences[1:]
     labels = sequences[0]
     return inputs, labels

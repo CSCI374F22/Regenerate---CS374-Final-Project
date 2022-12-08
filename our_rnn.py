@@ -67,10 +67,19 @@ def prepreocessing():
 
 
                 n_notes = len(all_notes)
-                print('Number of notes parsed:', n_notes)
+                #print('Number of notes parsed:', n_notes)
 
-                series = np.array(all_notes)
-                print(series)
+                #all_notes_np = np.array(all_notes)
+                #print(series)
+                #print(series[0].loc['pitch'])
+                #pitch_step_duration_all_notes = []
+                #for i in range(len(all_notes_np)):
+                    #pitch = all_notes_np[i].loc()
+                sequence = format_data(all_notes)
+
+                
+                
+                    
                 
 
                 
@@ -144,9 +153,21 @@ def add_to_dict( dictionary, key, value):
     else:
         dictionary[key] = [value]
 
-     
 
+# return a sequence of a dataset of tensors
+def format_data(all_notes):
+    # iterate through np array of dataframes
+    res = []
+    for i in range(len(all_notes)):
+        current = all_notes[i]
+        print(type(current))
+        # np_pitch_step_duration = np.array()
+        np_data = current[["pitch","step","duration"]].to_numpy()
+        
+        # made np_data into tensor
+        tensor = tf.constant(np_data, dtype=tf.float64)
+        res.append(tensor)
+        #print("teeeensor: ", tensor)
+    return res
 
 prepreocessing()
-
-

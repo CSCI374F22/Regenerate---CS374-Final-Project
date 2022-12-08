@@ -15,6 +15,9 @@ from note_seq import chords_encoder_decoder
 import numpy as np
 import pandas as pd
 
+SEQ_LEN = 25
+NUM_MIDI_VALS = 128
+
 def prepreocessing():
     tf.logging.set_verbosity(tf.logging.INFO)
     main_github_dir = os.getcwd() # get cwd
@@ -75,8 +78,51 @@ def prepreocessing():
                 #pitch_step_duration_all_notes = []
                 #for i in range(len(all_notes_np)):
                     #pitch = all_notes_np[i].loc()
+
                 sequence = format_data(all_notes)
 
+                shorter_seq = sequence[:SEQ_LEN]
+
+                #print(shorter_seq)
+
+                input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
+                #print(input_shape)
+                learning_rate = 0.005
+
+                inputs = tf.keras.Input(input_shape)
+                print(inputs)
+                x = tf.keras.layers.LSTM(128)(inputs) # defines LSTM layer with 128 things for # of midi values
+
+                # define output layer of dense layers
+                outputs = {
+                    # define hidden layers, specifying amount of possible values of the output
+                    'pitch': tf.keras.layers.Dense(128, name='pitch')(x),
+                    'step': tf.keras.layers.Dense(1, name='step')(x),
+                    'duration': tf.keras.layers.Dense(1, name='duration')(x),
+                }
+
+                model = tf.keras.Model(inputs, outputs) # define model
+
+                loss = {
+                    # Computes the crossentropy loss between the labels and predictions
+
+                    # logits the vector of raw (non-normalized) predictions that a classification model generates,
+                    # Probability of 0.5 corresponds to a logit of 0. Negative logit correspond to probabilities less than 0.5, positive to > 0.5.
+
+
+                    'pitch': tf.keras.losses.SparseCategoricalCrossentropy(
+                        from_logits=True),
+                    'step': mse_with_positive_pressure,
+                    'duration': mse_with_positive_pressure,
+                }
+
+                # optimizer implements Adam algorithm which is a stochastic gradient descent algorithm with smoother error correction
+                optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+
+                model.compile(loss=loss, optimizer=optimizer)
+
+                model.summary()
+                
                 
                 
                     
@@ -169,5 +215,25 @@ def format_data(all_notes):
         res.append(tensor)
         #print("teeeensor: ", tensor)
     return res
+
+# separate sequences into labels and inputs
+# sequences represent all the note sequences
+# a single sequence is 1 note sequence
+def separate_labels(sequences):
+    inputs = sequences[1:]
+    labels = sequences[0]
+    return inputs, labels
+
+
+#NOTE: Copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=erxLOif08e8v
+#Generates Mean Squared Error like normal but includes this idea of positive pressure.
+#Positive pressure a method to increase the error value which then forces the network
+#to make larger adjustments to the weights, to push the output values back up to a positive value.
+#If the predicted value is already positive, the positive pressure will be 0 and have no influence on the error.
+def mse_with_positive_pressure(y_true: tf.Tensor, y_pred: tf.Tensor):
+  mse = (y_true - y_pred) ** 2
+  positive_pressure = 10 * tf.maximum(-y_pred, 0.0)
+  return tf.reduce_mean(mse + positive_pressure)
+
 
 prepreocessing()

@@ -58,12 +58,6 @@ def prepreocessing():
                 #train_notes = np.stack([all_notes[all_notes.index(key)] for key in key_order], axis=1)
                 
                 # translate list of notes to be formatted as pitch, step, duration
-                """ train_notes = []
-                for note in all_notes:
-                    L = [note['pitch'], note['step'], note['duration']]
-                    train_notes.append(L)
-                
-                print("dimensions: ", np.shape(train_notes)) """
 
                 #notes_ds = tf.data.Dataset.from_tensor_slices(train_notes)
                 #notes_ds.element_spec
@@ -71,16 +65,12 @@ def prepreocessing():
                 # copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=mvNHCHZdXG2P
                 # TODO: below is all copy pasted
 
-                all_notes = pd.concat(all_notes)
 
                 n_notes = len(all_notes)
                 print('Number of notes parsed:', n_notes)
 
-                key_order = ['pitch', 'step', 'duration']
-                train_notes = np.stack([all_notes[key] for key in key_order], axis=1)
-
-                notes_ds = tf.data.Dataset.from_tensor_slices(train_notes)
-                notes_ds.element_spec
+                series = np.array(all_notes)
+                print(series)
                 
 
                 

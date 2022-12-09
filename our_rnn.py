@@ -177,8 +177,8 @@ def prepreocessing():
 
     epochs = 50
 
-    np_batch_inputs = np.asarray(batch_inputs).asarray('float32')
-    np_batch_label = np.asarray(batch_label).asarray('float32')
+    np_batch_inputs = np.asarray(batch_inputs).astype('float32')
+    np_batch_label = np.asarray(batch_label).astype('float32')
     model.evaluate(np_batch_inputs, np_batch_label)
 
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?

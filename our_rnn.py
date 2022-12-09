@@ -4,18 +4,20 @@
 
 import magenta
 import note_seq
-from note_seq import chord_inference
-import magenta.scripts.convert_dir_to_note_sequences as scripts
-import tensorflow.compat.v1 as tf
-from tensorflow.data import Dataset, TFRecordDataset
-from note_seq import midi_io
 import os
-from note_seq import sequences_lib # https://github.com/magenta/note-seq/blob/a7ea6b3ce073b0791fc5e89260eae8e621a3ba0c/note_seq/chord_inference.py for quantization of note_seq
-from note_seq import chords_encoder_decoder
 import numpy as np
 import pandas as pd
-import random
+import magenta.scripts.convert_dir_to_note_sequences as scripts
+import tensorflow.compat.v1 as tf
 
+
+from note_seq import sequences_lib
+from note_seq import chords_encoder_decoder
+from note_seq import chord_inference
+from tensorflow.data import Dataset, TFRecordDataset
+from note_seq import midi_io
+from note_seq import sequences_lib # https://github.com/magenta/note-seq/blob/a7ea6b3ce073b0791fc5e89260eae8e621a3ba0c/note_seq/chord_inference.py for quantization of note_seq
+from note_seq import chords_encoder_decoder
 SEQ_LEN = 25
 NUM_MIDI_VALS = 128
 

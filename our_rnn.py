@@ -10,6 +10,7 @@ import pandas as pd
 import magenta.scripts.convert_dir_to_note_sequences as scripts
 import tensorflow.compat.v1 as tf
 import random
+import keyfindingalg
 
 
 from note_seq import sequences_lib
@@ -58,7 +59,18 @@ def prepreocessing():
                 # convert midi file to note seq
                 note_sequence = midi_io.midi_file_to_note_sequence(filepath)
 
+
+                # get key of filename
+                key = keyfindingalg.get_key(str(filepath))
+                print(filename, key)
+
                 # transpose to universal key
+                #dataframe_of_notes = extract_notes(note_sequence)
+                #pitches = list(dataframe_of_notes['pitch'])
+                #min_pitch = min(pitches)
+                #max_pitch = max(pitches)
+
+
 
                 #print(note_sequence.notes[0].pitch)
                 seq = extract_notes(note_sequence)
@@ -177,9 +189,11 @@ def prepreocessing():
 
     epochs = 50
 
-    np_batch_inputs = np.asarray(batch_inputs).astype('float32')
-    np_batch_label = np.asarray(batch_label).astype('float32')
-    model.evaluate(np_batch_inputs, np_batch_label)
+    
+
+    # np_batch_inputs = np.asarray(batch_inputs).astype('float32')
+    #np_batch_label = np.asarray(batch_label).astype('float32')
+    #model.evaluate(np_batch_inputs, np_batch_label)
 
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
     
@@ -187,7 +201,7 @@ def prepreocessing():
                 
                 
                 
-                    
+    
                 
 
                 

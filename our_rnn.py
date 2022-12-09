@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import magenta.scripts.convert_dir_to_note_sequences as scripts
 import tensorflow.compat.v1 as tf
+import random
 
 
 from note_seq import sequences_lib
@@ -22,7 +23,7 @@ SEQ_LEN = 25
 NUM_MIDI_VALS = 128
 
 # define batch size
-BATCH_SIZE = 64
+BATCH_SIZE = 12
 
 # define universal key
 
@@ -44,10 +45,11 @@ def prepreocessing():
 
     chord_dict = dict()
     all_note_sequences = []
+    count = 0
     for (root,dirs,files) in os.walk(input_dir, topdown=True):
         # need all root, dirs, files in order to get the files alone
         # loop though all the files
-        filename_chord_list = []
+        filename_chord_list = [] 
         for filename in files:
             #print(filename)
             if len(dirs) == 0:
@@ -67,17 +69,23 @@ def prepreocessing():
 
                 # getting large collection of all the notes in all files
                 all_note_sequences.append(seq)
+                count += 1
 
     # transpose it and change its shape to be the total of all the rows of the note_sequences
-    all_note_sequences = pd.concat(all_note_sequences)
+    #print("length of all_note: ", n_notes)
+    all_note_sequences= format_data(all_note_sequences)
+
+    # all_note_sequences = pd.concat(all_note_sequences)
+
+
 
     n_notes = len(all_note_sequences)
-    #print("length of all_note: ", n_notes)
+    
+    #print(all_note_sequences)
+    #print("length ssakhafdhkj: ", n_notes)
+    #print("count: ", count)
 
-    sequence = format_data(all_note_sequences)
-    print(sequence)
-
-    #shorter_seq = sequence[:SEQ_LEN] # taking snippet of all that data
+    shorter_seq = all_note_sequences[:SEQ_LEN] # taking snippet of all that data
 
     # Format dataset further by creating batches
     # batches allow us to pass in multiple instances of the training set at one, faster overall
@@ -87,12 +95,15 @@ def prepreocessing():
     # shuffle the dataset to be random, and create batches
 
     #print(shorter_seq)
-    #random.shuffle(sequence) # shuffle random
-    #labels = separate_labels(sequence)
+    random.shuffle(all_note_sequences) # shuffle random
+    labels = separate_labels(all_note_sequences)
     #print("length of sequence: ", len(sequence))
-    #get_batch(sequence, labels) # gets generator object
+    batches = get_batch(all_note_sequences, labels) # gets generator object
+
+    # copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
     #print("batches: ", batches)
-    #batch_inputs, batch_label = next(batch) # gets next item in the iterator batch
+    batch_inputs, batch_label = next(batches) # gets next item in the iterator batch
+    print("batch: ", batch_inputs, batch_label)
     #print(batch)
     #x = list(batches)
     #print(x)
@@ -106,7 +117,7 @@ def prepreocessing():
     # Create model, copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=kNaVWcCzAm5V
     # TODO: below is all copy pasted
 
-    """ input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
+    input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
     #print(input_shape)
     learning_rate = 0.005
 
@@ -141,7 +152,7 @@ def prepreocessing():
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
     model.compile(loss=loss, optimizer=optimizer)
-"""
+
     #model.summary()
                 
                 
@@ -235,6 +246,7 @@ def format_data(all_notes):
         tensor = tf.constant(np_data, dtype=tf.float64)
         res.append(tensor)
         #print("teeeensor: ", tensor)
+    res = np.asarray(res)
     return res
 
 # separate sequences into labels and inputs
@@ -272,7 +284,7 @@ def get_batch(inputX, label):
         # getting each batch and its corresponding label
         # yield: sends value back to caller but maintains enough state to resume where function left off
         # yield returns an iterator
-        #yield inputX[index: index + BATCH_SIZE], label[index: index + BATCH_SIZE]
+        yield inputX[index: index + BATCH_SIZE], label[index: index + BATCH_SIZE]
 
 
 

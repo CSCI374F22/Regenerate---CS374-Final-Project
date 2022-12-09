@@ -14,12 +14,16 @@ from note_seq import sequences_lib # https://github.com/magenta/note-seq/blob/a7
 from note_seq import chords_encoder_decoder
 import numpy as np
 import pandas as pd
+import random
 
 SEQ_LEN = 25
 NUM_MIDI_VALS = 128
 
 # define batch size
 BATCH_SIZE = 64
+
+# define universal key
+
 
 def prepreocessing():
     tf.logging.set_verbosity(tf.logging.INFO)
@@ -37,12 +41,11 @@ def prepreocessing():
 
 
     chord_dict = dict()
-
+    all_note_sequences = []
     for (root,dirs,files) in os.walk(input_dir, topdown=True):
         # need all root, dirs, files in order to get the files alone
         # loop though all the files
         filename_chord_list = []
-        all_notes = []
         for filename in files:
             #print(filename)
             if len(dirs) == 0:
@@ -50,72 +53,94 @@ def prepreocessing():
                 
                 # convert midi file to note seq
                 note_sequence = midi_io.midi_file_to_note_sequence(filepath)
+
+                # transpose to universal key
+
                 #print(note_sequence.notes[0].pitch)
-                notes = extract_notes(note_sequence)
+                seq = extract_notes(note_sequence)
                 """ for key in notes:
                     if key == 'pitch':
                         #print(notes[key])
                 print('----------------------') """
 
                 # getting large collection of all the notes in all files
-                all_notes.append(notes)
+                all_note_sequences.append(seq)
 
-                n_notes = len(all_notes)
+    # transpose it and change its shape to be the total of all the rows of the note_sequences
+    all_note_sequences = pd.concat(all_note_sequences)
 
-                sequence = format_data(all_notes)
+    n_notes = len(all_note_sequences)
+    #print("length of all_note: ", n_notes)
 
-                shorter_seq = sequence[:SEQ_LEN]
+    sequence = format_data(all_note_sequences)
+    print(sequence)
 
-                # Format dataset further by creating batches
-                # batches allow us to pass in multiple instances of the training set at one, faster overall
+    #shorter_seq = sequence[:SEQ_LEN] # taking snippet of all that data
 
-                num_dataset_items = n_notes - SEQ_LEN # number of items in dataset
+    # Format dataset further by creating batches
+    # batches allow us to pass in multiple instances of the training set at one, faster overall
 
-                # shuffle the dataset to be random, and create batches
+    #num_dataset_items = n_notes - SEQ_LEN # number of items in dataset
 
+    # shuffle the dataset to be random, and create batches
 
-                #print(shorter_seq)
-
-                # Create model, copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=kNaVWcCzAm5V
-                # TODO: below is all copy pasted
-
-                input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
-                #print(input_shape)
-                learning_rate = 0.005
-
-                inputs = tf.keras.Input(input_shape)
-                print(inputs)
-                x = tf.keras.layers.LSTM(128)(inputs) # defines LSTM layer with 128 things for # of midi values
-
-                # define output layer of dense layers
-                outputs = {
-                    # define hidden layers, specifying amount of possible values of the output
-                    'pitch': tf.keras.layers.Dense(128, name='pitch')(x),
-                    'step': tf.keras.layers.Dense(1, name='step')(x),
-                    'duration': tf.keras.layers.Dense(1, name='duration')(x),
-                }
-
-                model = tf.keras.Model(inputs, outputs) # define model
-
-                loss = {
-                    # Computes the crossentropy loss between the labels and predictions
-
-                    # logits the vector of raw (non-normalized) predictions that a classification model generates,
-                    # Probability of 0.5 corresponds to a logit of 0. Negative logit correspond to probabilities less than 0.5, positive to > 0.5.
+    #print(shorter_seq)
+    #random.shuffle(sequence) # shuffle random
+    #labels = separate_labels(sequence)
+    #print("length of sequence: ", len(sequence))
+    #get_batch(sequence, labels) # gets generator object
+    #print("batches: ", batches)
+    #batch_inputs, batch_label = next(batch) # gets next item in the iterator batch
+    #print(batch)
+    #x = list(batches)
+    #print(x)
+    #batch_x, batch_y = next(batches)
+    #print(sum(1 for x in batches))
+    #print("batch: ", batch_inputs)
+    #print("label: ", batch_label)
+    
 
 
-                    'pitch': tf.keras.losses.SparseCategoricalCrossentropy(
-                        from_logits=True),
-                    'step': mse_with_positive_pressure,
-                    'duration': mse_with_positive_pressure,
-                }
+    # Create model, copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=kNaVWcCzAm5V
+    # TODO: below is all copy pasted
 
-                # optimizer implements Adam algorithm which is a stochastic gradient descent algorithm with smoother error correction
-                optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    """ input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
+    #print(input_shape)
+    learning_rate = 0.005
 
-                model.compile(loss=loss, optimizer=optimizer)
+    inputs = tf.keras.Input(input_shape)
+    #print(inputs)
+    x = tf.keras.layers.LSTM(128)(inputs) # defines LSTM layer with 128 things for # of midi values
 
-                model.summary()
+    # define output layer of dense layers
+    outputs = {
+        # define hidden layers, specifying amount of possible values of the output
+        'pitch': tf.keras.layers.Dense(128, name='pitch')(x),
+        'step': tf.keras.layers.Dense(1, name='step')(x),
+        'duration': tf.keras.layers.Dense(1, name='duration')(x),
+    }
+
+    model = tf.keras.Model(inputs, outputs) # define model
+
+    loss = {
+        # Computes the crossentropy loss between the labels and predictions
+
+        # logits the vector of raw (non-normalized) predictions that a classification model generates,
+        # Probability of 0.5 corresponds to a logit of 0. Negative logit correspond to probabilities less than 0.5, positive to > 0.5.
+
+
+        'pitch': tf.keras.losses.SparseCategoricalCrossentropy(
+            from_logits=True),
+        'step': mse_with_positive_pressure,
+        'duration': mse_with_positive_pressure,
+    }
+
+    # optimizer implements Adam algorithm which is a stochastic gradient descent algorithm with smoother error correction
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+
+    model.compile(loss=loss, optimizer=optimizer)
+"""
+    #model.summary()
                 
                 
                 
@@ -126,10 +151,10 @@ def prepreocessing():
 
     #print(file_name_to_seq_encoding) 
 
-    for key in file_name_to_seq_encoding:
+    """  for key in file_name_to_seq_encoding:
         print(key, " : ")
         print(file_name_to_seq_encoding[key])
-        print("------------------")
+        print("------------------") """
 
 
     
@@ -199,8 +224,8 @@ def format_data(all_notes):
     # iterate through np array of dataframes
     res = []
     for i in range(len(all_notes)):
-        current = all_notes[i]
-        print(type(current))
+        current = all_notes[i] # single not sequence, of type series
+        #print(type(current))
         # np_pitch_step_duration = np.array()
         np_data = current[["pitch","step","duration"]].to_numpy()
         
@@ -214,8 +239,8 @@ def format_data(all_notes):
 # sequences represent all the note sequences
 # a single sequence is 1 note sequence
 def separate_labels(sequences): # need to put labels within the sequences list
-    inputs = sequences[1:]
-    labels = sequences[0]
+    inputs = sequences[:-1] 
+    labels = sequences[-1]
     return inputs, labels
 
 
@@ -228,6 +253,27 @@ def mse_with_positive_pressure(y_true: tf.Tensor, y_pred: tf.Tensor):
   mse = (y_true - y_pred) ** 2
   positive_pressure = 10 * tf.maximum(-y_pred, 0.0)
   return tf.reduce_mean(mse + positive_pressure)
+
+
+# Feed batch
+# referenced and copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
+def get_batch(inputX, label):
+    #print('aint you here')
+    length = len(inputX)
+    print("length: ", length)
+    # split data passed in into batches
+    print("range: ", length // BATCH_SIZE)
+    for i in range(0, (length//BATCH_SIZE)):
+        print("i: ", i)
+        # getting index of each batch
+        index = i * BATCH_SIZE
+        # getting each batch and its corresponding label
+        # yield: sends value back to caller but maintains enough state to resume where function left off
+        # yield returns an iterator
+        #yield inputX[index: index + BATCH_SIZE], label[index: index + BATCH_SIZE]
+
+
+
 
 
 prepreocessing()

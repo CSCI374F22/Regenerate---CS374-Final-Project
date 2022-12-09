@@ -75,6 +75,9 @@ def prepreocessing():
     #print("length of all_note: ", n_notes)
     all_note_sequences= format_data(all_note_sequences)
 
+    labels = separate_labels(all_note_sequences)
+    batches = get_batch(all_note_sequences, labels) # gets generator object
+
     # all_note_sequences = pd.concat(all_note_sequences)
 
 
@@ -96,14 +99,15 @@ def prepreocessing():
 
     #print(shorter_seq)
     random.shuffle(all_note_sequences) # shuffle random
-    labels = separate_labels(all_note_sequences)
+    
     #print("length of sequence: ", len(sequence))
-    batches = get_batch(all_note_sequences, labels) # gets generator object
+    
 
     # copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
     #print("batches: ", batches)
     batch_inputs, batch_label = next(batches) # gets next item in the iterator batch
-    print("batch: ", batch_inputs, batch_label)
+
+    #print("batch: ", batch_inputs, batch_label)
     #print(batch)
     #x = list(batches)
     #print(x)
@@ -135,7 +139,7 @@ def prepreocessing():
 
     model = tf.keras.Model(inputs, outputs) # define model
 
-    loss = {
+    loss = { # feedback
         # Computes the crossentropy loss between the labels and predictions
 
         # logits the vector of raw (non-normalized) predictions that a classification model generates,
@@ -153,7 +157,33 @@ def prepreocessing():
 
     model.compile(loss=loss, optimizer=optimizer)
 
-    #model.summary()
+    model.summary()
+
+    # Copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=uQA_rwKEgPjp
+
+    # callback is used in conjunction with training using model.fit() to save a model or weights (in a checkpoint file) at some interval, so the model or weights can be loaded later to continue the training from the state saved
+
+    callbacks = [
+    tf.keras.callbacks.ModelCheckpoint(
+        filepath='./training_checkpoints/ckpt_{epoch}',
+        save_weights_only=True),
+    # prevent overfitting
+    tf.keras.callbacks.EarlyStopping(
+        monitor='loss',
+        patience=5,
+        verbose=1,
+        restore_best_weights=True),
+    ]
+
+    epochs = 50
+
+    np_batch_inputs = np.asarray(batch_inputs).asarray('float32')
+    np_batch_label = np.asarray(batch_label).asarray('float32')
+    model.evaluate(np_batch_inputs, np_batch_label)
+
+    # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
+    
+    #model.fit(batch_inputs, batch_label, epochs=epochs,callbacks=callbacks)
                 
                 
                 

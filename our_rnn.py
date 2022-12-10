@@ -73,8 +73,8 @@ def prepreocessing():
                 if (keyinfo == 'major'):
                     master_index = SCALE.index(MASTER_MAJOR_KEY)
                 else:
-                    master_index = SCALE.index(MASTER_MINOR_KEY) """
-
+                    master_index = SCALE.index(MASTER_MINOR_KEY)
+                """
                 #current_index = SCALE.index(letter)
                 #transpose_int = abs(master_index - current_index)
                 #print("curr key: ", key)
@@ -185,7 +185,7 @@ def prepreocessing():
     #print(inputs)
     x = tf.keras.layers.LSTM(128, return_sequences=True)(inputs) # defines LSTM layer with 128 things for # of midi values
     # flatten
-    x = tf.keras.layers.Flatten()(x) 
+    #x = tf.keras.layers.Flatten()(x) 
 
     # define output layer of dense layers
     outputs = {
@@ -251,29 +251,35 @@ def prepreocessing():
     #print("shapes: ", np.shape(resized_label))
     #print("label size: ", np.shape(resized_label))
 
-    for x_batch, y_batch in get_batch(all_note_sequences, labels):
+    """ for x_batch, y_batch in get_batch(all_note_sequences, labels):
         x_batch = x_batch.to_numpy()
         resized_batch = x_batch.reshape(1,BATCH_SIZE,3)
         y_batch = np.asarray(y_batch)
         print("shape: ", resized_batch)
         print("shape label: ", y_batch)
         model.evaluate(resized_batch, y_batch, return_dict=True)
-
+ """
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
     
     # better, now labels are just wrong dimension and that's why keeps failing
     # referenced https://datascience.stackexchange.com/questions/108099/is-fitting-a-model-in-a-for-loop-equivalent-to-using-epochs1
-    """ num_steps_per_epoch = n_notes // BATCH_SIZE
+    num_steps_per_epoch = n_notes // BATCH_SIZE
     for epoch in range(epochs):
         for x_batch, y_batch in get_batch(all_note_sequences, labels):
             x_batch = x_batch.to_numpy()
-            resized_batch = x_batch.reshape(1,BATCH_SIZE,3)
+            resized_batch = x_batch.reshape(-1,BATCH_SIZE,3)
+            print("x batch: ", resized_batch)
             y_batch = y_batch.to_numpy()
-
-            print("shape: ", np.shape(resized_batch))
-            print("shape label: ", np.shape(y_batch))
+            resized_y = y_batch.reshape(-1,BATCH_SIZE,3)
+            print("y batch: ", y_batch)
+            #resized_y = y_batch.reshape(1,BATCH_SIZE)
             
-            model.fit(resized_batch, y_batch, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=1) """
+            print("x length: ", resized_batch.size)
+            print("y length: ", resized_y)
+            print("shape: ", np.shape(resized_batch))
+            print("shape label: ", np.shape(resized_y))
+            
+            model.fit(resized_batch, resized_y, batch_size=BATCH_SIZE, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=1)
                 
                 
                 
@@ -410,8 +416,8 @@ def get_batch(inputX, label):
         # getting each batch and its corresponding label
         # yield: sends value back to caller but maintains enough state to resume where function left off
         # yield returns an iterator
-        print("length of batch: ",len(inputX[index: index + BATCH_SIZE]))
-        print("length of label: ", len(label[index: index + BATCH_SIZE]))
+        #print("length of batch: ",len(inputX[index: index + BATCH_SIZE]))
+        #print("length of label: ", len(label[index: index + BATCH_SIZE]))
         yield inputX[index: index + BATCH_SIZE], label[index: index + BATCH_SIZE]
 
 

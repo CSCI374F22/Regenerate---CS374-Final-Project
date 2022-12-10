@@ -67,26 +67,26 @@ def prepreocessing():
 
 
                 # get key of filename
-                key, keyinfo = keyfindingalg.get_key(str(filepath))
+                """ key, keyinfo = keyfindingalg.get_key(str(filepath))
                 letter = key[0][0]
-                print(letter)
+                #print(letter)
                 if (keyinfo == 'major'):
                     master_index = SCALE.index(MASTER_MAJOR_KEY)
                 else:
-                    master_index = SCALE.index(MASTER_MINOR_KEY)
+                    master_index = SCALE.index(MASTER_MINOR_KEY) """
 
-                current_index = SCALE.index(letter)
-                transpose_int = abs(master_index - current_index)
-                print("curr key: ", key)
-                print(transpose_int)
+                #current_index = SCALE.index(letter)
+                #transpose_int = abs(master_index - current_index)
+                #print("curr key: ", key)
+                #print(transpose_int)
                 #print(filename, key, keyinfo)
 
                 # transpose to universal key
-                tp = note_sequence_pipelines.TranspositionPipeline(
-                    transpose_int, min_pitch=0, max_pitch=12)
+                """ tp = note_sequence_pipelines.TranspositionPipeline(
+                    transpose_int, min_pitch=0, max_pitch=12) """
                 
                 
-                transposed = tp.transform(note_sequence)
+                #transposed = tp.transform(note_sequence)
                 #dataframe_of_notes = extract_notes(note_sequence)
                 #pitches = list(dataframe_of_notes['pitch'])
                 #min_pitch = min(pitches)
@@ -95,7 +95,8 @@ def prepreocessing():
 
 
                 #print(note_sequence.notes[0].pitch)
-                seq = extract_notes(transposed)
+                #seq = extract_notes(transposed)
+                seq = extract_notes(note_sequence)
                 """ for key in notes:
                     if key == 'pitch':
                         #print(notes[key])
@@ -103,14 +104,19 @@ def prepreocessing():
 
                 # getting large collection of all the notes in all files
                 all_note_sequences.append(seq)
-                count += 1
+                #count += 1
 
+    print("Before shape: ", np.shape(all_note_sequences))
+    #print("all_note_sequences (Before): ", all_note_sequences)
+    
     # transpose it and change its shape to be the total of all the rows of the note_sequences
     #print("length of all_note: ", n_notes)
+    #all_note_sequences = pd.concat(all_note_sequences)
     all_note_sequences= format_data(all_note_sequences)
-    # all_note_sequences = pd.concat(all_note_sequences)
-
-
+    all_note_sequences = pd.concat(all_note_sequences)
+    
+    print("After shape: ", np.shape(all_note_sequences))
+    #print("all_note_sequences (After): ", all_note_sequences)
 
     n_notes = len(all_note_sequences)
     
@@ -124,7 +130,7 @@ def prepreocessing():
     print("short seq: ")
     print(np.shape(shorter_seq))
     
-    labels = separate_labels(shorter_seq)
+    #labels = separate_labels(shorter_seq)
     # Format dataset further by creating batches
     # batches allow us to pass in multiple instances of the training set at one, faster overall
 
@@ -133,15 +139,15 @@ def prepreocessing():
     # shuffle the dataset to be random, and create batches
 
     #print(shorter_seq)
-    random.shuffle(shorter_seq) # shuffle random
+    random.shuffle(all_note_sequences) # shuffle random
     
     #print("length of sequence: ", len(sequence))
 
-    batches = get_batch(shorter_seq, labels) # gets generator object
+    #batches = get_batch(shorter_seq, labels) # gets generator object
 
     # copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
     #print("batches: ", batches)
-    batch_inputs, batch_label = next(batches) # gets next item in the iterator batch
+    #batch_inputs, batch_label = next(batches) # gets next item in the iterator batch
 
     #print("batch: ", batch_inputs, batch_label)
     #print(batch)
@@ -157,7 +163,7 @@ def prepreocessing():
     # Create model, copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=kNaVWcCzAm5V
     # TODO: below is all copy pasted
 
-    input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
+    input_shape = (SEQ_LEN, 5) # gets shape / dimensions of input
     #print(input_shape)
     learning_rate = 0.005
 
@@ -312,17 +318,19 @@ def format_data(all_notes):
     for i in range(len(all_notes)):
         current = all_notes[i] # single not sequence, of type series
         # np_pitch_step_duration = np.array()
-        np_data1 = current["pitch"].to_numpy()
-        print("pitches: ", np_data1)
-        np_data2 = current["step"].to_numpy()
-        np_data3 = current["duration"].to_numpy()
-        final = np.array([np_data1,np_data2, np_data3]).T
-        print("final: ", final)
+        np_data1 = current[["pitch", "step", "duration"]].to_numpy()
+        #print("pitches: ", np_data1)
+        #np_data2 = current["step"].to_numpy()
+        #np_data3 = current["duration"].to_numpy()
+        #final = np.array([np_data1,np_data2, np_data3]).T
+        final = np.array(np_data1)
+        #print("final: ", final)
         # made np_data into tensor
-        tensor = tf.constant(final, dtype=tf.float64)
-        res.append(tensor)
+        #tensor = tf.constant(final, dtype=tf.float64)
+        res.append(np_data1)
         #print("teeeensor: ", tensor)
     res = np.asarray(res)
+    #res = pd.Series(res)
     return res
 
 # separate sequences into labels and inputs

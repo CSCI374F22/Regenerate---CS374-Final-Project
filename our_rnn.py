@@ -131,7 +131,7 @@ def prepreocessing():
     shorter_seq = all_note_sequences[:SEQ_LEN] # taking snippet of all that data
     print("short seq: ")
     print(np.shape(shorter_seq))
-    print("shorter: ", shorter_seq)
+    #print("shorter: ", shorter_seq)
     #labels = separate_labels(shorter_seq)[1]
     #print("lab: ", labels)
     # Format dataset further by creating batches
@@ -145,15 +145,26 @@ def prepreocessing():
     random.shuffle(list(all_note_sequences)) # shuffle random
     
     #print("length of sequence: ", len(sequence))
+
+    # needs to include the last notes (pitch, step, duration) of ALL the note sequences, not just one
+    labels = []
+    for i in range(len(all_note_sequences)):
+        pitches = all_note_sequences["pitch"].iloc[i]
+        steps = all_note_sequences["step"].iloc[i]
+        duration = steps = all_note_sequences["duration"].iloc[i]
+        #np_data3 = current["duration"].to_numpy()
+        final = np.array([pitches,steps, duration]).T
+        labels.append(final[-1])
+    #batches = get_batch(all_note_sequences, labels) # gets generator object
+    #labels = all_note_sequences
     labels = all_note_sequences.iloc[-BATCH_SIZE:]
-    batches = get_batch(all_note_sequences, labels) # gets generator object
-
     # copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
-    print("batches: ", batches)
-    batch_inputs, batch_label = next(batches) # gets next item in the iterator batch
+    #print("batches: ", batches)
+    #batch_x, batch_y = next(batches) # gets next item in the iterator batch
 
-    print("batch: ", batch_inputs, batch_label)
-    #print(batch)
+    """ print("batch: ", batch_inputs, batch_label)
+    print("length: ", np.size(batch_inputs.to_numpy()))
+    print("length: ", np.size(batch_label.to_numpy())) """
     #x = list(batches)
     #print(x)
     #batch_x, batch_y = next(batches)
@@ -173,6 +184,8 @@ def prepreocessing():
     inputs = tf.keras.Input(input_shape)
     #print(inputs)
     x = tf.keras.layers.LSTM(128, return_sequences=True)(inputs) # defines LSTM layer with 128 things for # of midi values
+    # flatten
+    x = tf.keras.layers.Flatten()(x) 
 
     # define output layer of dense layers
     outputs = {
@@ -230,20 +243,37 @@ def prepreocessing():
     #print(np.shape(shorter_seq))
     #np_batch_inputs = np.asarray(batch_inputs).astype('object')
     #np_batch_label = np.asarray(batch_label).astype('object')
-    batch_inputs = batch_label.to_numpy()
-    batch_label = batch_label.to_numpy()
-    resized_batch = batch_inputs.reshape(1,32,3)
-    resized_label = batch_label.reshape(1,32,3)
-    print("shapes: ", np.shape(resized_batch))
+    #batch_inputs = batch_label.to_numpy()
+    #batch_label = batch_label.to_numpy()
+    #resized_batch = batch_inputs.reshape(1,32,3) # size 128
+    #resized_label = batch_label.reshape(1,32,1) # size 96 (somethin not right)
+    #print("shapes: ", np.shape(resized_batch))
     #print("shapes: ", np.shape(resized_label))
+    #print("label size: ", np.shape(resized_label))
 
-    model.evaluate(resized_batch, return_dict=True)
+    for x_batch, y_batch in get_batch(all_note_sequences, labels):
+        x_batch = x_batch.to_numpy()
+        resized_batch = x_batch.reshape(1,BATCH_SIZE,3)
+        y_batch = np.asarray(y_batch)
+        print("shape: ", resized_batch)
+        print("shape label: ", y_batch)
+        model.evaluate(resized_batch, y_batch, return_dict=True)
 
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
     
     # better, now labels are just wrong dimension and that's why keeps failing
+    # referenced https://datascience.stackexchange.com/questions/108099/is-fitting-a-model-in-a-for-loop-equivalent-to-using-epochs1
+    """ num_steps_per_epoch = n_notes // BATCH_SIZE
+    for epoch in range(epochs):
+        for x_batch, y_batch in get_batch(all_note_sequences, labels):
+            x_batch = x_batch.to_numpy()
+            resized_batch = x_batch.reshape(1,BATCH_SIZE,3)
+            y_batch = y_batch.to_numpy()
 
-    #model.fit(resized_batch, resized_label, epochs=epochs,callbacks=callbacks)
+            print("shape: ", np.shape(resized_batch))
+            print("shape label: ", np.shape(y_batch))
+            
+            model.fit(resized_batch, y_batch, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=1) """
                 
                 
                 
@@ -374,12 +404,14 @@ def get_batch(inputX, label):
     # split data passed in into batches
     print("range: ", length // BATCH_SIZE)
     for i in range(0, (length//BATCH_SIZE)):
-        print("i: ", i)
+        #print("i: ", i)
         # getting index of each batch
         index = i * BATCH_SIZE
         # getting each batch and its corresponding label
         # yield: sends value back to caller but maintains enough state to resume where function left off
         # yield returns an iterator
+        print("length of batch: ",len(inputX[index: index + BATCH_SIZE]))
+        print("length of label: ", len(label[index: index + BATCH_SIZE]))
         yield inputX[index: index + BATCH_SIZE], label[index: index + BATCH_SIZE]
 
 

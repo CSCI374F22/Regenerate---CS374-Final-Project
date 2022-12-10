@@ -27,7 +27,7 @@ SEQ_LEN = 54
 NUM_MIDI_VALS = 128
 
 # define batch size
-BATCH_SIZE = 12
+BATCH_SIZE = 32
 
 # define universal key
 MASTER_MAJOR_KEY = 'C' # C major
@@ -112,8 +112,10 @@ def prepreocessing():
     # transpose it and change its shape to be the total of all the rows of the note_sequences
     #print("length of all_note: ", n_notes)
     #all_note_sequences = pd.concat(all_note_sequences)
-    all_note_sequences= format_data(all_note_sequences)
+    #all_note_sequences= format_data(all_note_sequences)
+    
     all_note_sequences = pd.concat(all_note_sequences)
+
     
     print("After shape: ", np.shape(all_note_sequences))
     #print("all_note_sequences (After): ", all_note_sequences)
@@ -129,8 +131,9 @@ def prepreocessing():
     shorter_seq = all_note_sequences[:SEQ_LEN] # taking snippet of all that data
     print("short seq: ")
     print(np.shape(shorter_seq))
-    
-    #labels = separate_labels(shorter_seq)
+    print("shorter: ", shorter_seq)
+    #labels = separate_labels(shorter_seq)[1]
+    #print("lab: ", labels)
     # Format dataset further by creating batches
     # batches allow us to pass in multiple instances of the training set at one, faster overall
 
@@ -139,17 +142,17 @@ def prepreocessing():
     # shuffle the dataset to be random, and create batches
 
     #print(shorter_seq)
-    random.shuffle(all_note_sequences) # shuffle random
+    random.shuffle(list(all_note_sequences)) # shuffle random
     
     #print("length of sequence: ", len(sequence))
-
-    #batches = get_batch(shorter_seq, labels) # gets generator object
+    labels = all_note_sequences.iloc[-BATCH_SIZE:]
+    batches = get_batch(all_note_sequences, labels) # gets generator object
 
     # copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
-    #print("batches: ", batches)
-    #batch_inputs, batch_label = next(batches) # gets next item in the iterator batch
+    print("batches: ", batches)
+    batch_inputs, batch_label = next(batches) # gets next item in the iterator batch
 
-    #print("batch: ", batch_inputs, batch_label)
+    print("batch: ", batch_inputs, batch_label)
     #print(batch)
     #x = list(batches)
     #print(x)
@@ -163,13 +166,13 @@ def prepreocessing():
     # Create model, copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=kNaVWcCzAm5V
     # TODO: below is all copy pasted
 
-    input_shape = (SEQ_LEN, 5) # gets shape / dimensions of input
+    input_shape = (BATCH_SIZE, 3) # gets shape / dimensions of input
     #print(input_shape)
     learning_rate = 0.005
 
     inputs = tf.keras.Input(input_shape)
     #print(inputs)
-    x = tf.keras.layers.LSTM(128)(inputs) # defines LSTM layer with 128 things for # of midi values
+    x = tf.keras.layers.LSTM(128, return_sequences=True)(inputs) # defines LSTM layer with 128 things for # of midi values
 
     # define output layer of dense layers
     outputs = {
@@ -197,7 +200,7 @@ def prepreocessing():
     # optimizer implements Adam algorithm which is a stochastic gradient descent algorithm with smoother error correction
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
 
-    model.compile(loss=loss, optimizer=optimizer)
+    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
 
     model.summary()
 
@@ -219,20 +222,28 @@ def prepreocessing():
 
     epochs = 50
 
-    print("shape: ")
-    print(np.shape(batch_inputs))
-    print(np.shape(batch_label))
-    print()
-    print("shape of short: ")
-    print(np.shape(shorter_seq))
-    np_batch_inputs = np.asarray(batch_inputs).astype('object')
-    np_batch_label = np.asarray(batch_label).astype('object')
+   #print("shape: ")
+    #print(np.shape(batch_inputs))
+    #print(np.shape(batch_label))
+    #print()
+    #print("shape of short: ")
+    #print(np.shape(shorter_seq))
+    #np_batch_inputs = np.asarray(batch_inputs).astype('object')
+    #np_batch_label = np.asarray(batch_label).astype('object')
+    batch_inputs = batch_label.to_numpy()
+    batch_label = batch_label.to_numpy()
+    resized_batch = batch_inputs.reshape(1,32,3)
+    resized_label = batch_label.reshape(1,32,3)
+    print("shapes: ", np.shape(resized_batch))
+    #print("shapes: ", np.shape(resized_label))
 
-    #model.evaluate(shorter_seq)
+    model.evaluate(resized_batch, return_dict=True)
 
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
     
-    #model.fit(batch_inputs, batch_label, epochs=epochs,callbacks=callbacks)
+    # better, now labels are just wrong dimension and that's why keeps failing
+
+    #model.fit(resized_batch, resized_label, epochs=epochs,callbacks=callbacks)
                 
                 
                 
@@ -296,8 +307,8 @@ def extract_notes(note_sequence):
         prev_start = start
 
         add_to_dict(notes, 'pitch', note_name)
-        add_to_dict(notes, 'start', start)
-        add_to_dict(notes, 'end', end)
+        #add_to_dict(notes, 'start', start)
+        #add_to_dict(notes, 'end', end)
         add_to_dict(notes, 'step', step)
         add_to_dict(notes, 'duration', duration)
     
@@ -337,8 +348,9 @@ def format_data(all_notes):
 # sequences represent all the note sequences
 # a single sequence is 1 note sequence
 def separate_labels(sequences): # need to put labels within the sequences list
-    inputs = sequences[:-1] 
-    labels = sequences[-1]
+    length = len(sequences)
+    inputs = sequences[:length-1] 
+    labels = sequences[length-1]
     return inputs, labels
 
 

@@ -205,7 +205,7 @@ def prepreocessing():
 
 
         'pitch': tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True),
+            from_logits=False),
         'step': mse_with_positive_pressure,
         'duration': mse_with_positive_pressure,
     }

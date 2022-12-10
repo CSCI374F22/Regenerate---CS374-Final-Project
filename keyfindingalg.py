@@ -137,10 +137,18 @@ def get_key(filename):
     all_keys.append(('A# min', get_correlation_coefficient(A_sharp_min_list)))
     all_keys.append(('B min', get_correlation_coefficient(B_min_list)))
 
+    major_keys = all_keys[:12]
+    minor_keys = all_keys[12:]
+
     # Find key with highest correlation
     R = max(all_keys, key=lambda tup: tup[1])
-    #print(R)
-    return R
+    print(R)
+    m = ''
+    if (R in major_keys):
+        m = 'major'
+    else:
+        m = 'minor'
+    return R, m
 
 # return a scale of a pitch class like the C# one: ['C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C']
 def get_key_list(starting_note):

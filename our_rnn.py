@@ -11,6 +11,7 @@ import magenta.scripts.convert_dir_to_note_sequences as scripts
 import tensorflow.compat.v1 as tf
 import random
 import keyfindingalg
+import math
 
 
 from note_seq import sequences_lib
@@ -20,14 +21,19 @@ from tensorflow.data import Dataset, TFRecordDataset
 from note_seq import midi_io
 from note_seq import sequences_lib # https://github.com/magenta/note-seq/blob/a7ea6b3ce073b0791fc5e89260eae8e621a3ba0c/note_seq/chord_inference.py for quantization of note_seq
 from note_seq import chords_encoder_decoder
-SEQ_LEN = 25
+from magenta.pipelines import note_sequence_pipelines
+
+SEQ_LEN = 54
 NUM_MIDI_VALS = 128
 
 # define batch size
 BATCH_SIZE = 12
 
 # define universal key
+MASTER_MAJOR_KEY = 'C' # C major
+MASTER_MINOR_KEY = 'A' # A minor
 
+SCALE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
 def prepreocessing():
     tf.logging.set_verbosity(tf.logging.INFO)
@@ -61,10 +67,26 @@ def prepreocessing():
 
 
                 # get key of filename
-                key = keyfindingalg.get_key(str(filepath))
-                print(filename, key)
+                key, keyinfo = keyfindingalg.get_key(str(filepath))
+                letter = key[0][0]
+                print(letter)
+                if (keyinfo == 'major'):
+                    master_index = SCALE.index(MASTER_MAJOR_KEY)
+                else:
+                    master_index = SCALE.index(MASTER_MINOR_KEY)
+
+                current_index = SCALE.index(letter)
+                transpose_int = abs(master_index - current_index)
+                print("curr key: ", key)
+                print(transpose_int)
+                #print(filename, key, keyinfo)
 
                 # transpose to universal key
+                tp = note_sequence_pipelines.TranspositionPipeline(
+                    transpose_int, min_pitch=0, max_pitch=12)
+                
+                
+                transposed = tp.transform(note_sequence)
                 #dataframe_of_notes = extract_notes(note_sequence)
                 #pitches = list(dataframe_of_notes['pitch'])
                 #min_pitch = min(pitches)
@@ -73,7 +95,7 @@ def prepreocessing():
 
 
                 #print(note_sequence.notes[0].pitch)
-                seq = extract_notes(note_sequence)
+                seq = extract_notes(transposed)
                 """ for key in notes:
                     if key == 'pitch':
                         #print(notes[key])
@@ -86,10 +108,6 @@ def prepreocessing():
     # transpose it and change its shape to be the total of all the rows of the note_sequences
     #print("length of all_note: ", n_notes)
     all_note_sequences= format_data(all_note_sequences)
-
-    labels = separate_labels(all_note_sequences)
-    batches = get_batch(all_note_sequences, labels) # gets generator object
-
     # all_note_sequences = pd.concat(all_note_sequences)
 
 
@@ -99,9 +117,14 @@ def prepreocessing():
     #print(all_note_sequences)
     #print("length ssakhafdhkj: ", n_notes)
     #print("count: ", count)
-
+    print("all notes: ")
+    print(np.shape(all_note_sequences))
+    print()
     shorter_seq = all_note_sequences[:SEQ_LEN] # taking snippet of all that data
-
+    print("short seq: ")
+    print(np.shape(shorter_seq))
+    
+    labels = separate_labels(shorter_seq)
     # Format dataset further by creating batches
     # batches allow us to pass in multiple instances of the training set at one, faster overall
 
@@ -110,10 +133,11 @@ def prepreocessing():
     # shuffle the dataset to be random, and create batches
 
     #print(shorter_seq)
-    random.shuffle(all_note_sequences) # shuffle random
+    random.shuffle(shorter_seq) # shuffle random
     
     #print("length of sequence: ", len(sequence))
-    
+
+    batches = get_batch(shorter_seq, labels) # gets generator object
 
     # copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
     #print("batches: ", batches)
@@ -189,11 +213,16 @@ def prepreocessing():
 
     epochs = 50
 
-    
+    print("shape: ")
+    print(np.shape(batch_inputs))
+    print(np.shape(batch_label))
+    print()
+    print("shape of short: ")
+    print(np.shape(shorter_seq))
+    np_batch_inputs = np.asarray(batch_inputs).astype('object')
+    np_batch_label = np.asarray(batch_label).astype('object')
 
-    # np_batch_inputs = np.asarray(batch_inputs).astype('float32')
-    #np_batch_label = np.asarray(batch_label).astype('float32')
-    #model.evaluate(np_batch_inputs, np_batch_label)
+    #model.evaluate(shorter_seq)
 
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
     
@@ -282,12 +311,15 @@ def format_data(all_notes):
     res = []
     for i in range(len(all_notes)):
         current = all_notes[i] # single not sequence, of type series
-        #print(type(current))
         # np_pitch_step_duration = np.array()
-        np_data = current[["pitch","step","duration"]].to_numpy()
-        
+        np_data1 = current["pitch"].to_numpy()
+        print("pitches: ", np_data1)
+        np_data2 = current["step"].to_numpy()
+        np_data3 = current["duration"].to_numpy()
+        final = np.array([np_data1,np_data2, np_data3]).T
+        print("final: ", final)
         # made np_data into tensor
-        tensor = tf.constant(np_data, dtype=tf.float64)
+        tensor = tf.constant(final, dtype=tf.float64)
         res.append(tensor)
         #print("teeeensor: ", tensor)
     res = np.asarray(res)

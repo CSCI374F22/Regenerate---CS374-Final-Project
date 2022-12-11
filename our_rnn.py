@@ -142,7 +142,7 @@ def prepreocessing():
     # shuffle the dataset to be random, and create batches
 
     #print(shorter_seq)
-    random.shuffle(list(all_note_sequences)) # shuffle random
+    #random.shuffle(list(all_note_sequences)) # shuffle random
     
     #print("length of sequence: ", len(sequence))
 
@@ -157,7 +157,7 @@ def prepreocessing():
         labels.append(final[-1])
     #batches = get_batch(all_note_sequences, labels) # gets generator object
     #labels = all_note_sequences
-    labels = all_note_sequences.iloc[-BATCH_SIZE:]
+   #labels = all_note_sequences.iloc[-BATCH_SIZE:]
     # copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
     #print("batches: ", batches)
     #batch_x, batch_y = next(batches) # gets next item in the iterator batch
@@ -266,22 +266,26 @@ def prepreocessing():
     num_steps_per_epoch = n_notes // BATCH_SIZE
 
     #try things with this dataset
-    ns_dataset = format_data(all_note_sequences)
+    ns_dataset = format_data(shorter_seq)
+    print("data: ", ns_dataset)
+    print("shape of dataset: ", np.shape(ns_dataset))
+    batch = ns_dataset.batch(BATCH_SIZE, drop_remainder=True)
+    print("batch: ", batch)
 
     for epoch in range(epochs):
         for x_batch, y_batch in get_batch(all_note_sequences, labels):
             x_batch = x_batch.to_numpy()
             resized_batch = x_batch.reshape(-1,BATCH_SIZE,3)
-            print("x batch: ", resized_batch)
-            y_batch = y_batch.to_numpy()
-            resized_y = y_batch.reshape(-1,BATCH_SIZE,3)
-            print("y batch: ", y_batch)
+            #print("x batch: ", resized_batch)
+            y_batch = np.asarray(y_batch)
+            resized_y = y_batch.reshape(-1,BATCH_SIZE)
+            #print("y batch: ", y_batch)
             #resized_y = y_batch.reshape(1,BATCH_SIZE)
             
-            print("x length: ", resized_batch.size)
-            print("y length: ", resized_y)
-            print("shape: ", np.shape(resized_batch))
-            print("shape label: ", np.shape(resized_y))
+            #print("x length: ", resized_batch.size)
+            #print("y length: ", resized_y)
+            #print("shape: ", np.shape(resized_batch))
+            #print("shape label: ", np.shape(resized_y))
             
             model.fit(resized_batch, resized_y, batch_size=BATCH_SIZE, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=1)
                 

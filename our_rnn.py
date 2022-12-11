@@ -264,6 +264,10 @@ def prepreocessing():
     # better, now labels are just wrong dimension and that's why keeps failing
     # referenced https://datascience.stackexchange.com/questions/108099/is-fitting-a-model-in-a-for-loop-equivalent-to-using-epochs1
     num_steps_per_epoch = n_notes // BATCH_SIZE
+
+    #try things with this dataset
+    ns_dataset = format_data(all_note_sequences)
+
     for epoch in range(epochs):
         for x_batch, y_batch in get_batch(all_note_sequences, labels):
             x_batch = x_batch.to_numpy()
@@ -361,24 +365,36 @@ def add_to_dict( dictionary, key, value):
 # return a sequence of a dataset of tensors
 def format_data(all_notes):
     # iterate through np array of dataframes
-    res = []
+    array_list = []
     for i in range(len(all_notes)):
-        current = all_notes[i] # single not sequence, of type series
+        # current = all_notes.iloc[i] # single not sequence, of type series
         # np_pitch_step_duration = np.array()
-        np_data1 = current[["pitch", "step", "duration"]].to_numpy()
+        # np_data1 = current[["pitch", "step", "duration"]].to_numpy()
+        # print("current data:",np_data1)
         #print("pitches: ", np_data1)
         #np_data2 = current["step"].to_numpy()
         #np_data3 = current["duration"].to_numpy()
         #final = np.array([np_data1,np_data2, np_data3]).T
-        final = np.array(np_data1)
+        # final = np.array(np_data1)
         #print("final: ", final)
         # made np_data into tensor
-        #tensor = tf.constant(final, dtype=tf.float64)
-        res.append(np_data1)
-        #print("teeeensor: ", tensor)
-    res = np.asarray(res)
-    #res = pd.Series(res)
-    return res
+        # tensor = tf.constant(final, dtype=tf.float64)
+
+        current = all_notes.iloc[i] # single not sequence, of type series
+        np_data = current[["pitch", "step", "duration"]].to_numpy()
+        # print("current data:",np_data)
+
+        final = np.array(np_data)
+        array_list.append(final)
+    
+    ns_dataset = tf.data.Dataset.from_tensor_slices(array_list)
+    print("dataset test:",type(ns_dataset))
+
+    # print_list = list(ns_dataset.as_numpy_iterator())
+    # for array in print_list:
+    #     print(array)
+    
+    return ns_dataset
 
 # separate sequences into labels and inputs
 # sequences represent all the note sequences

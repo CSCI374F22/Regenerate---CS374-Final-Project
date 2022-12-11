@@ -12,7 +12,7 @@ def set_port():
     midi_in = rtmidi.MidiIn()
     port = midi_in.get_ports() #should find 'USB MIDI Interface'
     midi_in.open_port(0)
-    return port
+    return port # port[0]
 
 #Also pretty self explanatory
 def close_port(midi_port):
@@ -57,13 +57,13 @@ def write_file(midi_events):
     
 
 def main():
-    midi_in = set_port()
-    midi_in.set_callback(handle_input) 
+    midi_in = rtmidi.MidiIn() # used to be set_port()
+    print(midi_in)  
+    midi_in.set_callback(handle_input)  # this can't be called on a port only on rtmidi
     #waits 30 seconds; this will be called in a loop if there's still input in the master function
     time.sleep(30)
     
     #callback finishes
-
     midi_in.close_port()
     current = write_file(all_midi_events)
 

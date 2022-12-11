@@ -23,11 +23,11 @@ from note_seq import sequences_lib # https://github.com/magenta/note-seq/blob/a7
 from note_seq import chords_encoder_decoder
 from magenta.pipelines import note_sequence_pipelines
 
-SEQ_LEN = 54
+SEQ_LEN = 32
 NUM_MIDI_VALS = 128
 
 # define batch size
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 # define universal key
 MASTER_MAJOR_KEY = 'C' # C major
@@ -157,7 +157,7 @@ def prepreocessing():
         labels.append(final[-1])
     #batches = get_batch(all_note_sequences, labels) # gets generator object
     #labels = all_note_sequences
-   #labels = all_note_sequences.iloc[-BATCH_SIZE:]
+    #labels = all_note_sequences.iloc[-BATCH_SIZE:]
     # copied from https://stackoverflow.com/questions/50539342/getting-batches-in-tensorflow
     #print("batches: ", batches)
     #batch_x, batch_y = next(batches) # gets next item in the iterator batch
@@ -177,7 +177,7 @@ def prepreocessing():
     # Create model, copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=kNaVWcCzAm5V
     # TODO: below is all copy pasted
 
-    input_shape = (BATCH_SIZE, 3) # gets shape / dimensions of input
+    input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
     #print(input_shape)
     learning_rate = 0.005
 
@@ -253,32 +253,37 @@ def prepreocessing():
 
     """ for x_batch, y_batch in get_batch(all_note_sequences, labels):
         x_batch = x_batch.to_numpy()
-        resized_batch = x_batch.reshape(1,BATCH_SIZE,3)
+        resized_batch = x_batch.reshape(-1,SEQ_LEN,3)
         y_batch = np.asarray(y_batch)
+        resized_y = y_batch.reshape(-1,SEQ_LEN)
         print("shape: ", resized_batch)
-        print("shape label: ", y_batch)
-        model.evaluate(resized_batch, y_batch, return_dict=True)
- """
+        print("shape label: ", resized_y)
+        model.evaluate(resized_batch, resized_y, return_dict=True) """
+
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
     
     # better, now labels are just wrong dimension and that's why keeps failing
     # referenced https://datascience.stackexchange.com/questions/108099/is-fitting-a-model-in-a-for-loop-equivalent-to-using-epochs1
-    num_steps_per_epoch = n_notes // BATCH_SIZE
 
     #try things with this dataset
-    ns_dataset = format_data(shorter_seq)
+    """ ns_dataset = format_data(shorter_seq)
     print("data: ", ns_dataset)
     print("shape of dataset: ", np.shape(ns_dataset))
     batch = ns_dataset.batch(BATCH_SIZE, drop_remainder=True)
-    print("batch: ", batch)
+    print("batch: ", batch) """
+
+    # possible fix for warning: tensorflow:Your input ran out of data: https://stackoverflow.com/questions/59864408/tensorflowyour-input-ran-out-of-data
+    num_steps_per_epoch = n_notes // BATCH_SIZE
 
     for epoch in range(epochs):
         for x_batch, y_batch in get_batch(all_note_sequences, labels):
             x_batch = x_batch.to_numpy()
-            resized_batch = x_batch.reshape(-1,BATCH_SIZE,3)
+            resized_batch = x_batch.reshape(-1,SEQ_LEN,3)
             #print("x batch: ", resized_batch)
             y_batch = np.asarray(y_batch)
-            resized_y = y_batch.reshape(-1,BATCH_SIZE)
+            resized_y = y_batch.reshape(-1,SEQ_LEN)
+
+            
             #print("y batch: ", y_batch)
             #resized_y = y_batch.reshape(1,BATCH_SIZE)
             

@@ -276,7 +276,7 @@ def prepreocessing():
     num_steps_per_epoch = n_notes // BATCH_SIZE
 
     for epoch in range(epochs):
-        for x_batch, y_batch in get_batch(all_note_sequences, labels):
+        for x_batch, y_batch in get_batch(shorter_seq, labels):
             x_batch = x_batch.to_numpy()
             resized_batch = x_batch.reshape(-1,SEQ_LEN,3)
             #print("x batch: ", resized_batch)
@@ -431,9 +431,9 @@ def mse_with_positive_pressure(y_true: tf.Tensor, y_pred: tf.Tensor):
 def get_batch(inputX, label):
     #print('aint you here')
     length = len(inputX)
-    print("length: ", length)
+    # print("length: ", length)
     # split data passed in into batches
-    print("range: ", length // BATCH_SIZE)
+    # print("range: ", length // BATCH_SIZE)
     for i in range(0, (length//BATCH_SIZE)):
         #print("i: ", i)
         # getting index of each batch

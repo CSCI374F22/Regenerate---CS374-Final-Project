@@ -12,6 +12,7 @@ import tensorflow.compat.v1 as tf
 import random
 import keyfindingalg
 import math
+import mido
 
 
 from note_seq import sequences_lib
@@ -67,17 +68,17 @@ def prepreocessing():
 
 
                 # get key of filename
-                """ key, keyinfo = keyfindingalg.get_key(str(filepath))
+                key, keyinfo = keyfindingalg.get_key(str(filepath))
                 letter = key[0][0]
                 #print(letter)
                 if (keyinfo == 'major'):
                     master_index = SCALE.index(MASTER_MAJOR_KEY)
                 else:
                     master_index = SCALE.index(MASTER_MINOR_KEY)
-                """
-                #current_index = SCALE.index(letter)
+               
+                current_index = SCALE.index(letter)
                 #transpose_int = abs(master_index - current_index)
-                #print("curr key: ", key)
+                print("curr key: ", key, "master: ", master_index)
                 #print(transpose_int)
                 #print(filename, key, keyinfo)
 
@@ -91,8 +92,6 @@ def prepreocessing():
                 #pitches = list(dataframe_of_notes['pitch'])
                 #min_pitch = min(pitches)
                 #max_pitch = max(pitches)
-
-
 
                 #print(note_sequence.notes[0].pitch)
                 #seq = extract_notes(transposed)
@@ -278,18 +277,19 @@ def prepreocessing():
     print("batch: ", batch) """
 
     # possible fix for warning: tensorflow:Your input ran out of data: https://stackoverflow.com/questions/59864408/tensorflowyour-input-ran-out-of-data
-    num_steps_per_epoch = len(all_note_sequences[0:1000]) // BATCH_SIZE
+    
 
     #for epoch in range(epochs):
     for x_batch, y_batch in get_batch(all_note_sequences[0:1000], labels):
+        num_steps_per_epoch = len(x_batch) // BATCH_SIZE
         x_batch = x_batch.to_numpy()
         resized_batch = x_batch.reshape(-1,SEQ_LEN,3)
-        print("x batch: ", resized_batch)
+        #print("x batch: ", resized_batch)
         y_batch = np.asarray(y_batch)
         resized_y = y_batch.reshape(-1,SEQ_LEN)
 
         
-        print("y batch: ", resized_y)
+        #print("y batch: ", resized_y)
         #resized_y = y_batch.reshape(1,BATCH_SIZE)
         
         #print("x length: ", resized_batch.size)

@@ -128,9 +128,7 @@ def prepreocessing():
     print("all notes: ")
     print(np.shape(all_note_sequences))
     print()
-    shorter_seq = all_note_sequences[:SEQ_LEN] # taking snippet of all that data
-    print("short seq: ")
-    print(np.shape(shorter_seq))
+    
     #print("shorter: ", shorter_seq)
     #labels = separate_labels(shorter_seq)[1]
     #print("lab: ", labels)
@@ -251,14 +249,21 @@ def prepreocessing():
     #print("shapes: ", np.shape(resized_label))
     #print("label size: ", np.shape(resized_label))
 
-    """ for x_batch, y_batch in get_batch(all_note_sequences, labels):
+    shorter_seq = all_note_sequences.iloc[:SEQ_LEN] # taking snippet of all that data
+    print("all note sequences: ", all_note_sequences.iloc[0])
+    print()
+    print("short seq: ", shorter_seq.iloc[0])
+    print(np.shape(shorter_seq))
+    # model.evaluate
+
+    for x_batch, y_batch in get_batch(all_note_sequences[0:1000], labels): # must be long enough, at least 100
         x_batch = x_batch.to_numpy()
         resized_batch = x_batch.reshape(-1,SEQ_LEN,3)
         y_batch = np.asarray(y_batch)
         resized_y = y_batch.reshape(-1,SEQ_LEN)
-        print("shape: ", resized_batch)
-        print("shape label: ", resized_y)
-        model.evaluate(resized_batch, resized_y, return_dict=True) """
+        #print("shape: ", resized_batch)
+        #print("shape label: ", resized_y)
+        model.evaluate(resized_batch, resized_y, return_dict=True)
 
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
     
@@ -273,31 +278,30 @@ def prepreocessing():
     print("batch: ", batch) """
 
     # possible fix for warning: tensorflow:Your input ran out of data: https://stackoverflow.com/questions/59864408/tensorflowyour-input-ran-out-of-data
-    num_steps_per_epoch = n_notes // BATCH_SIZE
+    num_steps_per_epoch = len(all_note_sequences[0:1000]) // BATCH_SIZE
 
-    for epoch in range(epochs):
-        for x_batch, y_batch in get_batch(shorter_seq, labels):
-            x_batch = x_batch.to_numpy()
-            resized_batch = x_batch.reshape(-1,SEQ_LEN,3)
-            #print("x batch: ", resized_batch)
-            y_batch = np.asarray(y_batch)
-            resized_y = y_batch.reshape(-1,SEQ_LEN)
+    #for epoch in range(epochs):
+    for x_batch, y_batch in get_batch(all_note_sequences[0:1000], labels):
+        x_batch = x_batch.to_numpy()
+        resized_batch = x_batch.reshape(-1,SEQ_LEN,3)
+        print("x batch: ", resized_batch)
+        y_batch = np.asarray(y_batch)
+        resized_y = y_batch.reshape(-1,SEQ_LEN)
+
+        
+        print("y batch: ", resized_y)
+        #resized_y = y_batch.reshape(1,BATCH_SIZE)
+        
+        #print("x length: ", resized_batch.size)
+        #print("y length: ", resized_y)
+        print("shape: ", np.shape(resized_batch))
+        #print("shape label: ", np.shape(resized_y))
+        
+        model.fit(resized_batch, resized_y, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=epochs)
+            
+            
 
             
-            #print("y batch: ", y_batch)
-            #resized_y = y_batch.reshape(1,BATCH_SIZE)
-            
-            #print("x length: ", resized_batch.size)
-            #print("y length: ", resized_y)
-            #print("shape: ", np.shape(resized_batch))
-            #print("shape label: ", np.shape(resized_y))
-            
-            model.fit(resized_batch, resized_y, batch_size=BATCH_SIZE, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=1)
-                
-                
-                
-    
-                
 
                 
 

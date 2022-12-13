@@ -322,9 +322,35 @@ def prepreocessing():
         #print("shape label: ", np.shape(resized_y))
         
         model.fit(resized_batch, resized_y, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=epochs)
-            
-            
 
+
+    # generate notes
+            
+    num_generated_notes = 1000 # num of notes to generate
+
+    notes_generated = []
+
+    prev_start = 0 # set prev_start
+
+    res = music_pb2.NoteSequence() # create new note sequence
+
+    predict_note(model, all_note_sequences[:SEQ_LEN])
+
+    """  for i in range(num_generated_notes):
+        # get generated pitch, step, duration
+        pitch, step, duration = predict_note(model, all_note_sequences[:SEQ_LEN])
+        
+        start = prev_start + step
+        end = start + duration
+
+        res.notes.add(pitch=pitch, start_time=start, end_time=end)
+
+        prev_start = start
+
+    
+    generated_midi = mido.MidiFile('generated_piece.mid')
+
+    print('🎉 Done!', generated_midi) """
             
 
                 
@@ -493,6 +519,39 @@ def transpose(note_sequence, amount):
     res.total_time = note_sequence.total_time
     
     return res
+
+# referenced https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=X0kPjLBlcnY6
+
+def predict_note(model, notesequences):
+    temp = 1
+    inputs = tf.expand_dims(notesequences, 0)
+    predictions = model.predict(inputs)
+    print(predictions)
+
+    pitches_pred = predictions['pitch']
+    step_pred = predictions['step']
+    duration_pred = predictions['duration']
+
+    print("pitches: ", pitches_pred)
+
+    randomness = pitches_pred / temp
+    # Draws samples from a categorical distribution.
+    pitch = tf.random.categorical(randomness, num_samples=1)
+    print("pitch categorical: ", pitch)
+    # removes size 1 dimensions from shape of tensor
+    pitch = tf.squeeze(pitch, axis=-1)
+    duration_pred = tf.squeeze(duration_pred, axis=-1)
+    step_pred = tf.squeeze(step_pred, axis=-1)
+
+    # making sure step and duration values are non-neg
+
+     # `step` and `duration` values should be non-negative
+    step_pred = tf.maximum(0, step_pred)
+    duration_pred = tf.maximum(0, duration_pred)
+
+    return int(pitch), float(step_pred), float(duration_pred)
+
+
 
 
 

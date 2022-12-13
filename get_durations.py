@@ -20,38 +20,49 @@ def plus12(base_num):
 def string_sub(str1,str2):
     if str2 in str1:
         str1.replace(str2,'')
+    
+    return str1
 
 def check_offs(filename):
     test = MidiFile(filename)
     mid = MidiFile(type=0)
+    mid.ticks_per_beat = test.ticks_per_beat
     events = []
+
     i = 0
     for msg in test:
         if msg.type == 'note_off':
             i += 1
 
     if i == 0:
-        for msg in test:
-            events.append(msg)
-            if msg.type == 'note_on':
-                off = Message("note_off",channel=msg.channel,note=msg.note,velocity=msg.velocity,time=msg.time)
-                events.append(off)
+        for i, track in enumerate(test.tracks):
+            for msg in track:
+                events.append(msg)
+                if msg.type == 'note_on':
+                    off = Message("note_off",channel=msg.channel,note=msg.note,velocity=msg.velocity)
+                    off = off.copy(time=msg.time)
+                    events.append(off)
     
         trackname = string_sub(filename,'Piano_MIDI_Files/Jazz_Piano/')
-        track = MidiTrack(events)
-        mid.tracks.append(track)
-        mid.save(trackname)
+        final_trackname = string_sub(trackname,'.mid') + 'test.mid'
+
+        new_track = MidiTrack(events)
+        mid.tracks.append(new_track)
+        mid.save(final_trackname)
     
     return [i,mid]
 
 
 
 def scan(filename):
-    returns = check_offs(filename)
-    if returns[0] == 0:
-        test = returns[1]
-    else:
-        test = MidiFile(filename)
+    # returns = check_offs(filename)
+    # if returns[0] == 0:
+    #     test = returns[1]
+    #     print("Was Empty")
+    # else:
+    #     print("Was not Empty")
+    
+    test = MidiFile(filename)
      
     #note values start at 21(A0) and go to 127(G9), incrementing by 12 each octave
     note_dict = {'A': 0, 'A#': 0, 'B': 0,'C': 0, 'C#': 0, 'D': 0, 'D#': 0, 'E': 0, 'F': 0, 'F#': 0, 'G': 0, 'G#': 0}
@@ -69,7 +80,7 @@ def scan(filename):
     G_values = plus12(31)
 
     for msg in test:
-        print(msg)
+        # print(msg)
         if msg.type == 'note_off':
             if msg.note in A_values:
                 note_dict['A'] += msg.time

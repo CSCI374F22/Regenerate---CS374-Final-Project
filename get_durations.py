@@ -1,7 +1,7 @@
 #Program gets the sum of durations of all midi note_off messages, getting the total amount of time a note was played
 
 import sys
-from mido import MidiFile
+from mido import Message,MidiFile,MidiTrack
 
 #returns a list containing each possible value for MIDI note values of specific note for the first 8 octaves
 #might later hard code these values in and delete function
@@ -17,8 +17,42 @@ def plus12(base_num):
 
     return base_adds
 
-def scan(filename):
+def string_sub(str1,str2):
+    if str2 in str1:
+        str1.replace(str2,'')
+
+def check_offs(filename):
     test = MidiFile(filename)
+    mid = MidiFile(type=0)
+    events = []
+    i = 0
+    for msg in test:
+        if msg.type == 'note_off':
+            i += 1
+
+    if i == 0:
+        for msg in test:
+            events.append(msg)
+            if msg.type == 'note_on':
+                off = msg.copy()
+                off.type = 'note_off'
+                events.append(off)
+    
+        trackname = string_sub(filename,'Piano_MIDI_Files/Jazz_Piano/')
+        track = MidiTrack(events)
+        mid.tracks.append(track)
+        mid.save(trackname)
+    
+    return [i,mid]
+
+
+
+def scan(filename):
+    returns = check_offs(filename)
+    if returns[0] == 0:
+        test = returns[1]
+    else:
+        test = MidiFile(filename)
      
     #note values start at 21(A0) and go to 127(G9), incrementing by 12 each octave
     note_dict = {'A': 0, 'A#': 0, 'B': 0,'C': 0, 'C#': 0, 'D': 0, 'D#': 0, 'E': 0, 'F': 0, 'F#': 0, 'G': 0, 'G#': 0}
@@ -36,6 +70,7 @@ def scan(filename):
     G_values = plus12(31)
 
     for msg in test:
+        print(msg)
         if msg.type == 'note_off':
             if msg.note in A_values:
                 note_dict['A'] += msg.time

@@ -142,11 +142,11 @@ def get_key(filename):
 
     # Find key with highest correlation
     R = max(all_keys, key=lambda tup: tup[1])
-    print(R)
+    #print(R)
     m = ''
     if (R in major_keys):
         m = 'major'
-    else:
+    elif (R in minor_keys):
         m = 'minor'
     return R, m
 

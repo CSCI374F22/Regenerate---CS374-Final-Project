@@ -6,7 +6,7 @@ import note_seq
 #import numpy as np
 #import pandas as pd
 #import magenta.scripts.convert_dir_to_note_sequences as scripts
-import tensorflow.compat.v1 as tf
+import tensorflow.compat.v2 as tf
 from tensorboard.plugins.hparams import api as hp
 #import random
 #import keyfindingalg
@@ -40,11 +40,24 @@ from magenta.models.polyphony_rnn import polyphony_encoder_decoder
 
 def generate_bundle(checkpoint_path):
 
+    default_config = events_rnn_model.EventSequenceRnnConfig(
+        details = generator_pb2.GeneratorDetails(
+            id='Pls', 
+            description='RNN by three tired undergrads'),
+        encoder_decoder=note_seq.OneHotEventSequenceEncoderDecoder(
+            polyphony_encoder_decoder.PolyphonyOneHotEncoding()),
+        hparams=contrib_training.HParams(
+            batch_size=64,
+            rnn_layer_sizes=[2, 32, 3],
+            dropout_keep_prob=0.5,
+            clip_norm=5,
+            learning_rate=0.001))
+
     #Make Base Model
-    mag_model = events_rnn_model.EventSequenceRnnModel(default_configs)
+    mag_model = events_rnn_model.EventSequenceRnnModel(config=default_config)
 
     #MAke generator details
-    deets = generator_pb2.GeneratorDetails(id='BG!RNN', description='RNN for music made by oberlin undergrad')
+    deets = generator_pb2.GeneratorDetails(id='Pls', description='RNN for music made by oberlin undergrad')
 
     #Make Sequence Generator
     generator = sequence_generator.BaseSequenceGenerator(
@@ -57,25 +70,12 @@ def generate_bundle(checkpoint_path):
     #Run create_generator_bundle() on object
     generator.create_bundle_file(
         bundle_file = './bundles',
-        bundle_description = "BG! BG! BG! RNN Bundle"
+        bundle_description = "JustPleaseWork"
     )
 
-default_configs = {
-    'BG!Rnn':
-        events_rnn_model.EventSequenceRnnConfig(
-            generator_pb2.GeneratorDetails(
-                id='BG!Rnn', description='RNN by three tired undergrads'),
-            note_seq.OneHotEventSequenceEncoderDecoder(
-                polyphony_encoder_decoder.PolyphonyOneHotEncoding()),
-            contrib_training.hparams(
-                batch_size=64,
-                rnn_layer_sizes=[2, 32, 3],
-                dropout_keep_prob=0.5,
-                clip_norm=5,
-                learning_rate=0.001)),
-}
+
 
 def main():
-    generate_bundle('./training_checkpoints')
+    generate_bundle('./training_checkpoints/')
 
 main()

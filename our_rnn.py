@@ -23,6 +23,9 @@ from note_seq import midi_io
 from note_seq import sequences_lib # https://github.com/magenta/note-seq/blob/a7ea6b3ce073b0791fc5e89260eae8e621a3ba0c/note_seq/chord_inference.py for quantization of note_seq
 from note_seq import chords_encoder_decoder
 from magenta.pipelines import note_sequence_pipelines
+from magenta.common import testing_lib as common_testing_lib
+from note_seq.protobuf import music_pb2
+from magenta.pipelines import statistics
 
 SEQ_LEN = 32
 NUM_MIDI_VALS = 128
@@ -68,6 +71,8 @@ def prepreocessing():
 
 
                 # get key of filename
+
+                # get key of filename
                 key, keyinfo = keyfindingalg.get_key(str(filepath))
                 letter = key[0][0]
                 #print(letter)
@@ -77,31 +82,50 @@ def prepreocessing():
                     master_index = SCALE.index(MASTER_MINOR_KEY)
                
                 current_index = SCALE.index(letter)
-                #transpose_int = abs(master_index - current_index)
-                print("curr key: ", key, "master: ", master_index)
-                #print(transpose_int)
-                #print(filename, key, keyinfo)
+                transpose_int = master_index - current_index
 
-                # transpose to universal key
-                """ tp = note_sequence_pipelines.TranspositionPipeline(
-                    transpose_int, min_pitch=0, max_pitch=12) """
-                
-                
-                #transposed = tp.transform(note_sequence)
-                #dataframe_of_notes = extract_notes(note_sequence)
+                #print("curr key: ", key, "master: ", master_index)
+
+                dataframe_of_notes = extract_notes(note_sequence)
                 #pitches = list(dataframe_of_notes['pitch'])
+
+                # get min and max pitches
                 #min_pitch = min(pitches)
                 #max_pitch = max(pitches)
+                """ print("curr key: ", letter, ", transposed key: ", SCALE[master_index])
+                print(filename + ": transpose int: ", transpose_int) """
+                #print(filename, key, keyinfo)
+                
+                
 
-                #print(note_sequence.notes[0].pitch)
-                #seq = extract_notes(transposed)
-                seq = extract_notes(note_sequence)
+                    
+
+                # transpose to universal key
+                if (transpose_int == 0): # means file is already in master major or minor key
+                    #print("Gurrrrl, you got da master key")
+                    continue
+
+                # transpose 
+
+                transposed = transpose(note_sequence, transpose_int)
+
+                note_seq.sequence_proto_to_midi_file(transposed, 'transpositions/transposed-' + filename)
+
+                #print(typ\e(transposed))
+
+                #key, keyinfo = keyfindingalg.get_key(str(filepath))
+                #letter = key[0][0]
+                #print(letter)
+
+                
                 """ for key in notes:
                     if key == 'pitch':
                         #print(notes[key])
                 print('----------------------') """
 
                 # getting large collection of all the notes in all files
+                #print('--------------------')
+                seq = extract_notes(transposed)
                 all_note_sequences.append(seq)
                 #count += 1
 
@@ -448,6 +472,29 @@ def get_batch(inputX, label):
         #print("length of batch: ",len(inputX[index: index + BATCH_SIZE]))
         #print("length of label: ", len(label[index: index + BATCH_SIZE]))
         yield inputX[index: index + BATCH_SIZE], label[index: index + BATCH_SIZE]
+
+
+# transpose takes in a note sequence and adds an amount to each note in the sequence to transpose it to a diff key, and return transposed note sequence
+def transpose(note_sequence, amount):
+    res = music_pb2.NoteSequence()
+
+    sorted_note_seq = sorted(note_sequence.notes, key=lambda x: x.start_time)
+    
+    # set prev_start to be first value
+    prev_start = sorted_note_seq[0].start_time
+    
+    for note in sorted_note_seq:
+
+        # tranpose note by amount
+        new_note = note.pitch + amount
+
+        res.notes.add(pitch=new_note, start_time=note.start_time, end_time=note.end_time, velocity=note.velocity)
+
+    res.total_time = note_sequence.total_time
+    
+    return res
+
+
 
 
 

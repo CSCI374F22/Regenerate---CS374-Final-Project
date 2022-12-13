@@ -34,8 +34,7 @@ def check_offs(filename):
         for msg in test:
             events.append(msg)
             if msg.type == 'note_on':
-                off = msg.copy()
-                off.type = 'note_off'
+                off = Message("note_off",channel=msg.channel,note=msg.note,velocity=msg.velocity,time=msg.time)
                 events.append(off)
     
         trackname = string_sub(filename,'Piano_MIDI_Files/Jazz_Piano/')

@@ -610,18 +610,15 @@ def predict_note(model, notesequences):
     print("predictions: ", predictions)
 
     predictions /= temperature
-    pitch = tf.random.categorical(pitches, num_samples=1)
+    pitch = tf.random.categorical(predictions, num_samples=1)
     pitch = tf.squeeze(pitch, axis=-1)
-    durations = tf.squeeze(durations, axis=-1)
-    steps = tf.squeeze(steps, axis=-1)
 
-    print("pitches: ", pitches)
+    print("predictions: ", predictions)
     print("pitch: ", pitch)
 
     # `step` and `duration` values should be non-negative
     step = tf.maximum(0, step)
     duration = tf.maximum(0, duration)
-
   
 
     #print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))

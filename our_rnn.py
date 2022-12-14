@@ -29,6 +29,8 @@ from magenta.pipelines import statistics
 from keras.models import Sequential
 from keras.layers import LSTM
 from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers import Activation
 
 SEQ_LEN = 32
 NUM_MIDI_VALS = 128
@@ -222,25 +224,28 @@ def prepreocessing():
 
     #model = tf.keras.Model(inputs, outputs) # define model
     model = Sequential()
+    model.add(Dropout(0.3))
     model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
-    model.add(Dense(128))
+    model.add(Dropout(0.3))
+    model.add(Dense(108))
     model.add(Dense(1))
     model.add(Dense(1))
+    model.add(Activation('softmax'))
 
     model2 = Sequential()
     model2.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model2.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model2.add(Dense(1))
     model2.add(Dense(1))
-    model.add(Dense(1))
+    model2.add(Dense(1))
 
     model3 = Sequential()
     model3.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model3.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model3.add(Dense(1))
-    model.add(Dense(1))
-    model.add(Dense(1))
+    model3.add(Dense(1))
+    model3.add(Dense(1))
 
     """ loss = { # feedback
         # Computes the crossentropy loss between the labels and predictions
@@ -257,7 +262,7 @@ def prepreocessing():
 
     # optimizer implements Adam algorithm which is a stochastic gradient descent algorithm with smoother error correction
     #optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-    model.compile(optimizer='adam', loss='mse')
+    model.compile(optimizer='rmsprop', loss='categorical_crossentropy')
     model2.compile(optimizer='adam', loss='mse')
     model3.compile(optimizer='adam', loss='mse')
 
@@ -605,7 +610,7 @@ def transpose(note_sequence, amount):
 # referenced https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=X0kPjLBlcnY6
 
 def predict_pitch(model, notesequences):
-    temperature = 0.25
+    #temperature = 2
     #inputs = tf.expand_dims(notesequences, 0)
     reshaped_inputs = tf.expand_dims(notesequences, 0)
     print("reshaped inputs: ", reshaped_inputs)
@@ -614,7 +619,7 @@ def predict_pitch(model, notesequences):
     predictions = model.predict(reshaped_inputs)
     print("predictions: ", predictions)
 
-    predictions /= temperature
+    #predictions /= temperature
     #pitch = tf.random.categorical(predictions, num_samples=1)
     #pitch = tf.nn.softmax(predictions, axis = 1)
     pitch = np.argmax(predictions, axis = 1)

@@ -224,14 +224,15 @@ def prepreocessing():
 
     #model = tf.keras.Model(inputs, outputs) # define model
     model = Sequential()
-    model.add(Dropout(0.3))
+    #model.add(Dropout(0.3))
     model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model.add(Dropout(0.3))
     model.add(Dense(108))
     model.add(Dense(1))
     model.add(Dense(1))
-    model.add(Activation('softmax'))
+    #model.add(Dense(1))
+    #model.add(Activation('softmax'))
 
     model2 = Sequential()
     model2.add(LSTM(1, return_sequences=True, input_shape=inputShape))
@@ -267,6 +268,7 @@ def prepreocessing():
     model3.compile(optimizer='adam', loss='mse')
 
     #model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
+    model.build(inputShape)
 
     model.summary()
     model2.summary()
@@ -403,7 +405,7 @@ def prepreocessing():
 
     key_order = ['pitch', 'step', 'duration']
     
-    input_notes = np.stack([all_note_sequences[:SEQ_LEN][key] for key in key_order], axis=1)
+    input_notes = np.stack([all_note_sequences[0][key] for key in key_order], axis=1)
 
     # normalize inputs
     """ input_notes = (
@@ -417,7 +419,9 @@ def prepreocessing():
         
         # get generated pitch, step, duration
         #print("input notes: ", input_notes)
-        pitch = predict_pitch(model, input_notes)
+        pitch = predict_pitch(model, input_notes) * 2
+        if (i % 2 == 0):
+            pitch = pitch + 4
         step = predict_step(model2, input_notes)
         duration = predict_pitch(model3, input_notes)
 

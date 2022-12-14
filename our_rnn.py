@@ -138,6 +138,7 @@ def prepreocessing():
     #all_note_sequences= format_data(all_note_sequences)
     
     all_note_sequences = pd.concat(all_note_sequences)
+    print(all_note_sequences)
 
     
     print("After shape: ", np.shape(all_note_sequences))
@@ -226,7 +227,7 @@ def prepreocessing():
 
 
         'pitch': tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=False),
+            from_logits=True),
         'step': mse_with_positive_pressure,
         'duration': mse_with_positive_pressure,
     }
@@ -322,9 +323,53 @@ def prepreocessing():
         #print("shape label: ", np.shape(resized_y))
         
         model.fit(resized_batch, resized_y, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=epochs)
-            
-            
 
+
+    # generate notes
+            
+    num_generated_notes = 1000 # num of notes to generate
+
+    notes_generated = []
+
+    prev_start = 0 # set prev_start
+
+    res = music_pb2.NoteSequence() # create new note sequence
+
+    #predict_note(model, all_note_sequences[:SEQ_LEN])
+
+
+    key_order = ['pitch', 'step', 'duration']
+    
+    input_notes = np.stack([all_note_sequences[:SEQ_LEN][key] for key in key_order], axis=1)
+
+    # normalize inputs
+    """ input_notes = (
+        notes[:SEQ_LEN] / np.array([128, 1, 1])
+    ) """
+
+    print("input notes: ", input_notes)
+    print("shape: ", np.shape(input_notes))
+
+    for i in range(num_generated_notes):
+        
+        # get generated pitch, step, duration
+        #print("input notes: ", input_notes)
+        pitch, step, duration = predict_note(model, input_notes)
+        
+        start = prev_start + step
+        end = start + duration
+
+        res.notes.add(pitch=pitch, start_time=start, end_time=end, velocity=80)
+
+        prev_start = start
+
+    res.tempos.add(qpm=120) # used to be 60
+
+    note_seq.sequence_proto_to_midi_file(res, 'generated_piece.mid')
+
+    generated_midi = mido.MidiFile('generated_piece.mid')
+
+    print('🎉 Done!', generated_midi)
             
 
                 
@@ -493,6 +538,104 @@ def transpose(note_sequence, amount):
     res.total_time = note_sequence.total_time
     
     return res
+
+# referenced https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=X0kPjLBlcnY6
+
+def predict_note(model, notesequences):
+    temp = 1
+    #inputs = tf.expand_dims(notesequences, 0)
+    reshaped_inputs = tf.expand_dims(notesequences, 0)
+    print("reshaped inputs: ", reshaped_inputs)
+    print("reshaped shape: ", np.shape(reshaped_inputs))
+
+    predictions = model.predict(reshaped_inputs)
+
+    pitches = predictions['pitch']
+    steps = predictions['step']
+    durations = predictions['duration']
+
+    # change step_pred and duration_pred to have 1 element that is randomly chosen
+    random_step_arr = random.choice(steps)
+    size = len(random_step_arr)
+    random_step = random_step_arr[random.randint(0, size-1)]
+
+    print("length step: ", size)
+
+    random_duration_arr = random.choice(durations)
+    size2 = len(random_duration_arr)
+    random_duration = random_duration_arr[random.randint(0, size2-1)]
+
+    print("length duration: ", size2)
+
+    predictions['step'] = random_step[0]
+
+    print("check: ", random_step)
+    predictions['duration'] = random_duration[0]
+
+    updated_step = predictions['step']
+    updated_duration = predictions['duration']
+
+
+    # update pitches to be 2d array
+    #predictions['pitch'] = tf.expand_dims(pitches, 0)
+
+    #print("pitches: ", pitches_pred)
+    #print("shape: ", np.shape(pitches_pred))
+    shape_x = 1
+    shape_y = SEQ_LEN
+    shape_z = 128
+
+    # transpose pitches array from 3D to 2D
+    transposed_arr = pitches.transpose(2, 0, 1)
+    transposed_arr.shape = (shape_z, shape_x, shape_y)
+    updated_pitches = transposed_arr.reshape(shape_z, -1)
+
+    #flatten array
+    pitch_arr = random.choice(updated_pitches)
+    pitch = random.choice(pitch_arr)
+    #result_pitches = np_pitches.reshape([1, 4096])
+    
+
+    print()
+    print("updated pitch: ", pitch)
+    print("predictions: ", predictions)
+    print("pitch shape: ", np.shape(pitch_arr))
+    print()
+
+    predictions['pitches'] = pitch
+
+    #randomness = pitches / temp
+    # Draws samples from a categorical distribution.
+    #pitch = tf.random.categorical(randomness, num_samples=1)
+    #print("pitch categorical: ", pitch)
+    # removes size 1 dimensions from shape of tensor
+    """ result_pitches = tf.squeeze(result_pitches, axis=-1)
+    updated_duration = tf.squeeze(updated_duration, axis=-1)
+    updated_step = tf.squeeze(updated_step, axis=-1) """
+
+    #print("updated duration: ", updated_duration)
+    #print("updated step: ", updated_step)
+    #print("shape: ", np.shape(updated_duration))
+    #print("shape: ", np.shape())
+
+    # making sure step and duration values are non-neg
+     # `step` and `duration` values should be non-negative
+    """ updated_step = tf.maximum(0, updated_step)
+    updated_duration = tf.maximum(0, updated_duration) """
+
+    updated_step_num = float(updated_step)
+    updated_duration_num = float(updated_duration)
+    if updated_step_num < 0:
+        updated_step_num = 0
+    if updated_duration_num < 0:
+        updated_duration_num = 0
+    
+
+    print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))
+
+    return int(abs(pitch)), float(updated_step_num), float(updated_duration_num)
+
+
 
 
 

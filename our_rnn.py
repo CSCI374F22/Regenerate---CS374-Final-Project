@@ -26,6 +26,9 @@ from magenta.pipelines import note_sequence_pipelines
 from magenta.common import testing_lib as common_testing_lib
 from note_seq.protobuf import music_pb2
 from magenta.pipelines import statistics
+from keras.models import Sequential
+from keras.layers import LSTM
+from keras.layers import Dense
 
 SEQ_LEN = 32
 NUM_MIDI_VALS = 128
@@ -199,27 +202,33 @@ def prepreocessing():
     # Create model, copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=kNaVWcCzAm5V
     # TODO: below is all copy pasted
 
-    input_shape = (SEQ_LEN, 3) # gets shape / dimensions of input
+    inputShape = (SEQ_LEN, 3) # gets shape / dimensions of input
     #print(input_shape)
     learning_rate = 0.005
 
-    inputs = tf.keras.Input(input_shape)
+    #inputs = tf.keras.Input(input_shape)
     #print(inputs)
-    x = tf.keras.layers.LSTM(128, return_sequences=True)(inputs) # defines LSTM layer with 128 things for # of midi values
+    #x = tf.keras.layers.LSTM(128, return_sequences=True)(inputs) # defines LSTM layer with 128 things for # of midi values
     # flatten
     #x = tf.keras.layers.Flatten()(x) 
 
     # define output layer of dense layers
-    outputs = {
-        # define hidden layers, specifying amount of possible values of the output
-        'pitch': tf.keras.layers.Dense(128, name='pitch')(x),
-        'step': tf.keras.layers.Dense(1, name='step')(x),
-        'duration': tf.keras.layers.Dense(1, name='duration')(x),
-    }
+    """  outputs = {
+            # define hidden layers, specifying amount of possible values of the output
+            'pitch': tf.keras.layers.Dense(128, name='pitch')(x),
+            'step': tf.keras.layers.Dense(1, name='step')(x),
+            'duration': tf.keras.layers.Dense(1, name='duration')(x),
+        } """
 
-    model = tf.keras.Model(inputs, outputs) # define model
+    #model = tf.keras.Model(inputs, outputs) # define model
+    model = Sequential()
+    model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
+    model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
+    model.add(Dense(128, name='pitch'))
+    model.add(Dense(1, name='step'))
+    model.add(Dense(1, name='duration'))
 
-    loss = { # feedback
+    """ loss = { # feedback
         # Computes the crossentropy loss between the labels and predictions
 
         # logits the vector of raw (non-normalized) predictions that a classification model generates,
@@ -230,12 +239,13 @@ def prepreocessing():
             from_logits=True),
         'step': mse_with_positive_pressure,
         'duration': mse_with_positive_pressure,
-    }
+    } """
 
     # optimizer implements Adam algorithm which is a stochastic gradient descent algorithm with smoother error correction
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    #optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    model.compile(optimizer='adam', loss='mse')
 
-    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
+    #model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
 
     model.summary()
 
@@ -363,7 +373,7 @@ def prepreocessing():
 
         prev_start = start
 
-    res.tempos.add(qpm=120) # used to be 60
+    res.tempos.add(qpm=60) # used to be 120
 
     note_seq.sequence_proto_to_midi_file(res, 'generated_piece.mid')
 
@@ -555,7 +565,8 @@ def predict_note(model, notesequences):
     durations = predictions['duration']
 
     print(np.shape(pitches))
-    pitch = tf.random.categorical(pitches[0], num_samples=1)
+    #pitch = tf.random.categorical(pitches[0], num_samples=1)
+    #print("pitch random categorical: ", pitch)
     # change step_pred and duration_pred to have 1 element that is randomly chosen
     random_step_arr = random.choice(steps)
     size = len(random_step_arr)
@@ -593,8 +604,14 @@ def predict_note(model, notesequences):
     updated_pitches = transposed_arr.reshape(shape_z, -1)
 
     #flatten array
-    pitch_arr = random.choice(updated_pitches)
-    pitch = random.choice(pitch_arr)
+    #pitch_arr = random.choice(updated_pitches)
+    #pitch = random.choice(pitch_arr)
+    #pitch = np.argmax(updated_pitches)
+    softmax_arr = np.softmax(updated_pitches)
+    pitch = np.argmax(softmax_arr)
+
+    print("softmax_arr: ", softmax_arr)
+    print("pitch after: ", pitch)
     #result_pitches = np_pitches.reshape([1, 4096])
     
 
@@ -635,7 +652,7 @@ def predict_note(model, notesequences):
 
     #print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))
 
-    return int(abs(pitch)), float(updated_step_num), float(updated_duration_num)
+    return int(pitch), float(updated_step_num), float(updated_duration_num)
 
 
 

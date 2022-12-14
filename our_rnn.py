@@ -554,22 +554,24 @@ def predict_note(model, notesequences):
     steps = predictions['step']
     durations = predictions['duration']
 
+    print(np.shape(pitches))
+    pitch = tf.random.categorical(pitches[0], num_samples=1)
     # change step_pred and duration_pred to have 1 element that is randomly chosen
     random_step_arr = random.choice(steps)
     size = len(random_step_arr)
     random_step = random_step_arr[random.randint(0, size-1)]
 
-    print("length step: ", size)
+    #print("length step: ", size)
 
     random_duration_arr = random.choice(durations)
     size2 = len(random_duration_arr)
     random_duration = random_duration_arr[random.randint(0, size2-1)]
 
-    print("length duration: ", size2)
+    #print("length duration: ", size2)
 
     predictions['step'] = random_step[0]
 
-    print("check: ", random_step)
+    #print("check: ", random_step)
     predictions['duration'] = random_duration[0]
 
     updated_step = predictions['step']
@@ -597,9 +599,9 @@ def predict_note(model, notesequences):
     
 
     print()
-    print("updated pitch: ", pitch)
-    print("predictions: ", predictions)
-    print("pitch shape: ", np.shape(pitch_arr))
+    #print("updated pitch: ", pitch)
+    #print("predictions: ", predictions)
+    #print("pitch shape: ", np.shape(pitch_arr))
     print()
 
     predictions['pitches'] = pitch
@@ -631,7 +633,7 @@ def predict_note(model, notesequences):
         updated_duration_num = 0
     
 
-    print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))
+    #print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))
 
     return int(abs(pitch)), float(updated_step_num), float(updated_duration_num)
 

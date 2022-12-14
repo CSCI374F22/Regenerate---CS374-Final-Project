@@ -227,7 +227,7 @@ def prepreocessing():
     #model.add(Dropout(0.3))
     model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
-    model.add(Dropout(0.3))
+    #model.add(Dropout(0.3))
     model.add(Dense(108))
     model.add(Dense(1))
     model.add(Dense(1))
@@ -644,7 +644,7 @@ def predict_pitch(model, notesequences):
     return int(pitch)
 
 def predict_step(model, notesequences):
-    #temperature = 1
+    temperature = 5
     #inputs = tf.expand_dims(notesequences, 0)
     reshaped_inputs = tf.expand_dims(notesequences, 0)
     print("reshaped inputs: ", reshaped_inputs)
@@ -653,7 +653,7 @@ def predict_step(model, notesequences):
     predictions = model.predict(reshaped_inputs)
     print("predictions: ", predictions)
 
-    #predictions /= temperature
+    predictions /= temperature
     #pitch = tf.random.categorical(predictions, num_samples=1)
     step = np.argmax(predictions, axis = 1)
     step = tf.squeeze(step, axis=-1)

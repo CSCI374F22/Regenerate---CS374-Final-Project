@@ -40,11 +40,9 @@ import os
 
 #note Sequences
 os.system("convert_dir_to_note_sequences \
-    --input_dir=\"./Piano_MIDI_Files/\" \
+    --input_dir=\"./Piano_MIDI_Files/Piano_E_Competition_2011/Piano_E_Competition_2011_1\" \
     --output_file=\"./tmp/notesequences.tfrecord\" \
     --recursive")
-
-
 
 #Train Model
 os.system("polyphony_rnn_create_dataset \
@@ -55,15 +53,27 @@ os.system("polyphony_rnn_create_dataset \
 os.system("polyphony_rnn_train \
 --run_dir=\"./tmp/polyphony_rnn/logdir/run1\" \
 --sequence_example_file=\"./tmp/polyphony_rnn/sequence_examples/training_poly_tracks.tfrecord\" \
---hparams=\"batch_size=64,rnn_layer_sizes=[64,64]\" \
---num_training_steps=20000")
+--hparams=\"batch_size=64,rnn_layer_sizes=[32,32]\" \
+--num_training_steps=1000")
 
+
+os.system("polyphony_rnn_generate \
+    --run_dir=\"./tmp/polyphony_rnn/logdir/run1\" \
+    --hparams=\"batch_size=64,rnn_layer_sizes=[64,64]\" \
+    --output_dir=\"./tmp/polyphony_rnn/generated\" \
+    --num_outputs=1 \
+    --num_steps=128 \
+    --primer_pitches=\"[67,64,60]\" \
+    --condition_on_primer=true \
+    --inject_primer_during_generation=false")
+
+"""
 #Generate Mag File
 os.system("polyphony_rnn_generate \
 --run_dir=\"./tmp/polyphony_rnn/logdir/run1\" \
---hparams=\"batch_size=64,rnn_layer_sizes=[64,64]\" \
+--hparams=\"batch_size=64,rnn_layer_sizes=[32,32]\" \
 --bundle_file=\"./tmp/rnn.mag\" \
---save_generator_bundle")
+--save_generator_bundle=True")
 
 #Use MAg File
 os.system("polyphony_rnn_generate \
@@ -72,5 +82,6 @@ os.system("polyphony_rnn_generate \
 --num_outputs=10 \
 --num_steps=128 \
 --primer_pitches=\"[67,64,60]\" \
---condition_on_primer=true \
---inject_primer_during_generation=false")
+--condition_on_primer=True \
+--inject_primer_during_generation=False")
+"""

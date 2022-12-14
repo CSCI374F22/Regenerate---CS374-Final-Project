@@ -405,17 +405,22 @@ def prepreocessing():
         notes[:SEQ_LEN] / np.array([128, 1, 1])
     ) """
 
-    print("input notes: ", input_notes)
+    #print("input notes: ", input_notes)
     print("shape: ", np.shape(input_notes))
 
     for i in range(num_generated_notes):
         
         # get generated pitch, step, duration
         #print("input notes: ", input_notes)
-        pitch, step, duration = predict_note(model, input_notes)
+        pitch = predict_pitch(model, input_notes)
+        step = predict_step(model2, input_notes)
+        duration = predict_pitch(model3, input_notes)
+
         
         start = prev_start + step
         end = start + duration
+
+        print("pitch: ", pitch)
 
         res.notes.add(pitch=pitch, start_time=start, end_time=end, velocity=80)
 
@@ -599,8 +604,8 @@ def transpose(note_sequence, amount):
 
 # referenced https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=X0kPjLBlcnY6
 
-def predict_note(model, notesequences):
-    temperature = 1
+def predict_pitch(model, notesequences):
+    temperature = 0.25
     #inputs = tf.expand_dims(notesequences, 0)
     reshaped_inputs = tf.expand_dims(notesequences, 0)
     print("reshaped inputs: ", reshaped_inputs)
@@ -610,22 +615,78 @@ def predict_note(model, notesequences):
     print("predictions: ", predictions)
 
     predictions /= temperature
-    pitch = tf.random.categorical(predictions, num_samples=1)
+    #pitch = tf.random.categorical(predictions, num_samples=1)
+    #pitch = tf.nn.softmax(predictions, axis = 1)
+    pitch = np.argmax(predictions, axis = 1)
+    print("argmax pitch: ", pitch)
     pitch = tf.squeeze(pitch, axis=-1)
 
     print("predictions: ", predictions)
     print("pitch: ", pitch)
 
     # `step` and `duration` values should be non-negative
+    """ step = tf.maximum(0, step)
+    duration = tf.maximum(0, duration) """
+  
+
+    #print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))
+    print("return val: ", int(pitch))
+
+    return int(pitch)
+
+def predict_step(model, notesequences):
+    #temperature = 1
+    #inputs = tf.expand_dims(notesequences, 0)
+    reshaped_inputs = tf.expand_dims(notesequences, 0)
+    print("reshaped inputs: ", reshaped_inputs)
+    print("reshaped shape: ", np.shape(reshaped_inputs))
+
+    predictions = model.predict(reshaped_inputs)
+    print("predictions: ", predictions)
+
+    #predictions /= temperature
+    #pitch = tf.random.categorical(predictions, num_samples=1)
+    step = np.argmax(predictions, axis = 1)
+    step = tf.squeeze(step, axis=-1)
+
+    print("predictions: ", predictions)
+    print("step: ", step)
+
+    # `step` and `duration` values should be non-negative
     step = tf.maximum(0, step)
-    duration = tf.maximum(0, duration)
+    #duration = tf.maximum(0, duration)
   
 
     #print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))
 
-    return int(pitch), float(step), float(duration)
+    return int(step)
 
+def predict_duration(model, notesequences):
+    #temperature = 1
+    #inputs = tf.expand_dims(notesequences, 0)
+    reshaped_inputs = tf.expand_dims(notesequences, 0)
+    #print("reshaped inputs: ", reshaped_inputs)
+    #print("reshaped shape: ", np.shape(reshaped_inputs))
 
+    predictions = model.predict(reshaped_inputs)
+    #print("predictions: ", predictions)
+
+    #predictions /= temperature
+    #pitch = tf.random.categorical(predictions, num_samples=1)
+    duration = np.argmax(predictions, axis = 1)
+    duration = tf.squeeze(duration, axis=-1)
+
+    #print("predictions: ", predictions)
+    #print("duration: ", duration)
+
+    # `step` and `duration` values should be non-negative
+    """ step = tf.maximum(0, step)
+    duration = tf.maximum(0, duration) """
+  
+
+    #print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))
+
+    return int(duration)
 
 
 

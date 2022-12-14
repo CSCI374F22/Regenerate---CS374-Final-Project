@@ -224,9 +224,23 @@ def prepreocessing():
     model = Sequential()
     model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
     model.add(LSTM(1, return_sequences=True, input_shape=inputShape))
-    model.add(Dense(128, name='pitch'))
-    model.add(Dense(1, name='step'))
-    model.add(Dense(1, name='duration'))
+    model.add(Dense(128))
+    model.add(Dense(1))
+    model.add(Dense(1))
+
+    model2 = Sequential()
+    model2.add(LSTM(1, return_sequences=True, input_shape=inputShape))
+    model2.add(LSTM(1, return_sequences=True, input_shape=inputShape))
+    model2.add(Dense(1))
+    model2.add(Dense(1))
+    model.add(Dense(1))
+
+    model3 = Sequential()
+    model3.add(LSTM(1, return_sequences=True, input_shape=inputShape))
+    model3.add(LSTM(1, return_sequences=True, input_shape=inputShape))
+    model3.add(Dense(1))
+    model.add(Dense(1))
+    model.add(Dense(1))
 
     """ loss = { # feedback
         # Computes the crossentropy loss between the labels and predictions
@@ -244,18 +258,48 @@ def prepreocessing():
     # optimizer implements Adam algorithm which is a stochastic gradient descent algorithm with smoother error correction
     #optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
     model.compile(optimizer='adam', loss='mse')
+    model2.compile(optimizer='adam', loss='mse')
+    model3.compile(optimizer='adam', loss='mse')
 
     #model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
 
     model.summary()
+    model2.summary()
+    model3.summary()
 
     # Copied from https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=uQA_rwKEgPjp
 
     # callback is used in conjunction with training using model.fit() to save a model or weights (in a checkpoint file) at some interval, so the model or weights can be loaded later to continue the training from the state saved
 
-    callbacks = [
+    callbacks_pitch = [
     tf.keras.callbacks.ModelCheckpoint(
-        filepath='./training_checkpoints/ckpt_{epoch}',
+        filepath='./training_pitch_checkpoints/ckpt_{epoch}',
+        save_weights_only=True),
+    # prevent overfitting
+    tf.keras.callbacks.EarlyStopping(
+        monitor='loss',
+        patience=5,
+        verbose=1,
+        restore_best_weights=True),
+    ]
+
+    epochs = 50
+
+    callbacks_step = [
+    tf.keras.callbacks.ModelCheckpoint(
+        filepath='./training_step_checkpoints/ckpt_{epoch}',
+        save_weights_only=True),
+    # prevent overfitting
+    tf.keras.callbacks.EarlyStopping(
+        monitor='loss',
+        patience=5,
+        verbose=1,
+        restore_best_weights=True),
+    ]
+
+    callbacks_duration = [
+    tf.keras.callbacks.ModelCheckpoint(
+        filepath='./training_pitch_checkpoints/ckpt_{epoch}',
         save_weights_only=True),
     # prevent overfitting
     tf.keras.callbacks.EarlyStopping(
@@ -298,6 +342,8 @@ def prepreocessing():
         #print("shape: ", resized_batch)
         #print("shape label: ", resized_y)
         model.evaluate(resized_batch, resized_y, return_dict=True)
+        model2.evaluate(resized_batch, resized_y, return_dict=True)
+        model3.evaluate(resized_batch, resized_y, return_dict=True)
 
     # if all_note_sequences doesn't have tensors and formatting is shit, then will kina work?
     
@@ -332,7 +378,9 @@ def prepreocessing():
         print("shape: ", np.shape(resized_batch))
         #print("shape label: ", np.shape(resized_y))
         
-        model.fit(resized_batch, resized_y, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks, epochs=epochs)
+        model.fit(resized_batch, resized_y, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks_pitch, epochs=epochs)
+        model2.fit(resized_batch, resized_y, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks_step, epochs=epochs)
+        model3.fit(resized_batch, resized_y, steps_per_epoch=num_steps_per_epoch,callbacks=callbacks_duration, epochs=epochs)
 
 
     # generate notes
@@ -552,107 +600,33 @@ def transpose(note_sequence, amount):
 # referenced https://colab.research.google.com/github/tensorflow/docs/blob/master/site/en/tutorials/audio/music_generation.ipynb#scrollTo=X0kPjLBlcnY6
 
 def predict_note(model, notesequences):
-    temp = 1
+    temperature = 1
     #inputs = tf.expand_dims(notesequences, 0)
     reshaped_inputs = tf.expand_dims(notesequences, 0)
     print("reshaped inputs: ", reshaped_inputs)
     print("reshaped shape: ", np.shape(reshaped_inputs))
 
     predictions = model.predict(reshaped_inputs)
+    print("predictions: ", predictions)
 
-    pitches = predictions['pitch']
-    steps = predictions['step']
-    durations = predictions['duration']
+    predictions /= temperature
+    pitch = tf.random.categorical(pitches, num_samples=1)
+    pitch = tf.squeeze(pitch, axis=-1)
+    durations = tf.squeeze(durations, axis=-1)
+    steps = tf.squeeze(steps, axis=-1)
 
-    print(np.shape(pitches))
-    #pitch = tf.random.categorical(pitches[0], num_samples=1)
-    #print("pitch random categorical: ", pitch)
-    # change step_pred and duration_pred to have 1 element that is randomly chosen
-    random_step_arr = random.choice(steps)
-    size = len(random_step_arr)
-    random_step = random_step_arr[random.randint(0, size-1)]
+    print("pitches: ", pitches)
+    print("pitch: ", pitch)
 
-    #print("length step: ", size)
+    # `step` and `duration` values should be non-negative
+    step = tf.maximum(0, step)
+    duration = tf.maximum(0, duration)
 
-    random_duration_arr = random.choice(durations)
-    size2 = len(random_duration_arr)
-    random_duration = random_duration_arr[random.randint(0, size2-1)]
-
-    #print("length duration: ", size2)
-
-    predictions['step'] = random_step[0]
-
-    #print("check: ", random_step)
-    predictions['duration'] = random_duration[0]
-
-    updated_step = predictions['step']
-    updated_duration = predictions['duration']
-
-
-    # update pitches to be 2d array
-    #predictions['pitch'] = tf.expand_dims(pitches, 0)
-
-    #print("pitches: ", pitches_pred)
-    #print("shape: ", np.shape(pitches_pred))
-    shape_x = 1
-    shape_y = SEQ_LEN
-    shape_z = 128
-
-    # transpose pitches array from 3D to 2D
-    transposed_arr = pitches.transpose(2, 0, 1)
-    transposed_arr.shape = (shape_z, shape_x, shape_y)
-    updated_pitches = transposed_arr.reshape(shape_z, -1)
-
-    #flatten array
-    #pitch_arr = random.choice(updated_pitches)
-    #pitch = random.choice(pitch_arr)
-    #pitch = np.argmax(updated_pitches)
-    softmax_arr = np.softmax(updated_pitches)
-    pitch = np.argmax(softmax_arr)
-
-    print("softmax_arr: ", softmax_arr)
-    print("pitch after: ", pitch)
-    #result_pitches = np_pitches.reshape([1, 4096])
-    
-
-    print()
-    #print("updated pitch: ", pitch)
-    #print("predictions: ", predictions)
-    #print("pitch shape: ", np.shape(pitch_arr))
-    print()
-
-    predictions['pitches'] = pitch
-
-    #randomness = pitches / temp
-    # Draws samples from a categorical distribution.
-    #pitch = tf.random.categorical(randomness, num_samples=1)
-    #print("pitch categorical: ", pitch)
-    # removes size 1 dimensions from shape of tensor
-    """ result_pitches = tf.squeeze(result_pitches, axis=-1)
-    updated_duration = tf.squeeze(updated_duration, axis=-1)
-    updated_step = tf.squeeze(updated_step, axis=-1) """
-
-    #print("updated duration: ", updated_duration)
-    #print("updated step: ", updated_step)
-    #print("shape: ", np.shape(updated_duration))
-    #print("shape: ", np.shape())
-
-    # making sure step and duration values are non-neg
-     # `step` and `duration` values should be non-negative
-    """ updated_step = tf.maximum(0, updated_step)
-    updated_duration = tf.maximum(0, updated_duration) """
-
-    updated_step_num = float(updated_step)
-    updated_duration_num = float(updated_duration)
-    if updated_step_num < 0:
-        updated_step_num = 0
-    if updated_duration_num < 0:
-        updated_duration_num = 0
-    
+  
 
     #print("return vals: ", int(abs(pitch)), float(updated_step_num), float(updated_duration_num))
 
-    return int(pitch), float(updated_step_num), float(updated_duration_num)
+    return int(pitch), float(step), float(duration)
 
 
 

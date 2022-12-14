@@ -363,7 +363,7 @@ def prepreocessing():
 
         prev_start = start
 
-    res.tempos.add(qpm=60);
+    res.tempos.add(qpm=120) # used to be 60
 
     note_seq.sequence_proto_to_midi_file(res, 'generated_piece.mid')
 

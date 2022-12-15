@@ -42,8 +42,8 @@ from note_seq.protobuf import music_pb2
 #BUNDLE_PATH = path + '/polyphony_rnn.mag'
 #os.system("polyphony_rnn_generate --bundle_file=\"" + BUNDLE_PATH +  "\" --output_dir=\"" + FINAL_OUTPUT_DIR + "\" --primer_pitches=\"[67, 64, 60]\"")
 
-def main():
-    SEQ_LEN = 32
+
+SEQ_LEN = 32
 NUM_MIDI_VALS = 128
 
 # define batch size

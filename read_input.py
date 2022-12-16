@@ -4,9 +4,8 @@ import os
 import time
 
 from mido import Message,MidiFile,MidiTrack
+from datetime import datetime, timedelta
 
-#writes all messages as on and off messages and creates a Mido MIDI file
-running = True
 #writes all messages as on and off messages and creates a Mido MIDI file
 def write_file(events):
     mid = MidiFile(type=0)
@@ -15,27 +14,32 @@ def write_file(events):
     mid.save("new_file.mid")
 
 def main():
-    # https://stackoverflow.com/questions/61814607/how-do-you-get-midi-events-using-python-rtmidi
     instrument = mido.get_input_names()
     inport = mido.open_input(instrument[0])
     events = []
-    len_events_ago = 0
-    running = True
-    while running:
-        seconds = time.process_time() #start timer
-        print("time(s):", seconds)
-        msg = inport.receive()
-        msg = msg.copy(time=100)
-        events.append(msg)
-        #print("type: ", type(msg))
-        #print("events: ", events)
 
-        if int(seconds) % 10 == 0:
-            write_file(events)
+    #opens mido port and adds each message to events
+    with mido.open_input(instrument[0]) as inport:
+        #starts timer as each message ends
+        start = datetime.now()    
 
-        print(msg)    
+        for message in inport:
+
+            #how we get out of the read loop with no user input
+            if message.note == '21':
+                break
+            
+            #stops timer, counting the delta of ticks and assigning time
+            end = datetime.now()
+            ticks = ((end-start).microseconds)
+            msg = message.copy(time=ticks)
+
+            #adds to events which can be plugged into key detection
+            events.append(msg)
+        
+            if int(ticks//1000000) % 10 == 0:
+                write_file(events)
     
-    
-
+    print(events)
 
 main()

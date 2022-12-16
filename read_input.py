@@ -31,13 +31,19 @@ def main():
             
             #stops timer, counting the delta of ticks and assigning time
             end = datetime.now()
-            ticks = ((end-start).microseconds)
+
+            #gets the difference from start to end in ms and converts to seconds
+            seconds = (end-start).microseconds//1000000
+
+            #converts seconds to ticks
+            ticks = mido.second2tick(seconds)
             msg = message.copy(time=ticks)
 
             #adds to events which can be plugged into key detection
             events.append(msg)
-        
-            if int(ticks//1000000) % 10 == 0:
+
+            #if its been 10 (20,30...) seconds then write the file to midi
+            if seconds % 10 == 0:
                 write_file(events)
     
     print(events)

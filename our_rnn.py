@@ -47,7 +47,7 @@ SCALE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 def prepreocessing():
     tf.logging.set_verbosity(tf.logging.INFO)
     main_github_dir = os.getcwd() # get cwd
-    input_dir = main_github_dir + '/PianoCompetitionMidi/' # get midi folder
+    input_dir = main_github_dir + '/Piano_MIDI_Files/' # get midi folder
 
     # must output to TFRecord file otherwise note sequence is not able to be parsed
     #output_dir = main_github_dir + '/tmp/notesequences.tfrecord'
@@ -79,7 +79,8 @@ def prepreocessing():
 
                 # get key of filename
                 key, keyinfo = keyfindingalg.get_key(str(filepath))
-                letter = key[0][0]
+                letter_list = key[0].split()
+                letter = letter_list[0]
                 #print(letter)
                 if (keyinfo == 'major'):
                     master_index = SCALE.index(MASTER_MAJOR_KEY)
@@ -91,7 +92,7 @@ def prepreocessing():
 
                 #print("curr key: ", key, "master: ", master_index)
 
-                dataframe_of_notes = extract_notes(note_sequence)
+                #dataframe_of_notes = extract_notes(note_sequence)
                 #pitches = list(dataframe_of_notes['pitch'])
 
                 # get min and max pitches

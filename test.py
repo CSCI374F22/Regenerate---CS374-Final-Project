@@ -76,7 +76,7 @@ def transpose(note_sequence, amount):
 
 def prepreocessing():
     main_github_dir = os.getcwd() # get cwd
-    input_dir = main_github_dir + '/PianoCompetitionMidi/' # get midi folder
+    input_dir = main_github_dir + '/Piano_MIDI_Files/' # get midi folder
 
     # must output to TFRecord file otherwise note sequence is not able to be parsed
     #output_dir = main_github_dir + '/tmp/notesequences.tfrecord'
@@ -108,8 +108,8 @@ def prepreocessing():
 
                 # get key of filename
                 key, keyinfo = keyfindingalg.get_key(str(filepath))
-                letter = key[0][0]
-                #print(letter)
+                letter_list = key[0].split()
+                letter = letter_list[0]
                 if (keyinfo == 'major'):
                     master_index = SCALE.index(MASTER_MAJOR_KEY)
                 else:
@@ -143,7 +143,7 @@ def prepreocessing():
 
                 transposed = transpose(note_sequence, transpose_int)
 
-                note_seq.sequence_proto_to_midi_file(transposed, filepath)
+                note_seq.sequence_proto_to_midi_file(transposed, 'transpositions/transposed-' + filename)
 
                 print(type(transposed))
 
@@ -167,7 +167,7 @@ prepreocessing()
 
 #note Sequences
 os.system("convert_dir_to_note_sequences \
-    --input_dir=\"./Piano_MIDI_Files/Piano_E_Competition_2011/Piano_E_Competition_2011_1\" \
+    --input_dir=\"./transpositions\" \
     --output_file=\"./tmp/notesequences.tfrecord\" \
     --recursive")
 

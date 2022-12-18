@@ -47,7 +47,7 @@ SCALE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 def prepreocessing():
     tf.logging.set_verbosity(tf.logging.INFO)
     main_github_dir = os.getcwd() # get cwd
-    input_dir = main_github_dir + '/Piano_MIDI_Files/' # get midi folder
+    input_dir = main_github_dir + '/Piano_MIDI_Files/Piano_E_Competition_2011/Piano_E_Competition_2011_1/' # get midi folder
 
     # must output to TFRecord file otherwise note sequence is not able to be parsed
     #output_dir = main_github_dir + '/tmp/notesequences.tfrecord'

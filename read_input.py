@@ -26,26 +26,30 @@ def main():
         for message in inport:
 
             #how we get out of the read loop with no user input
-            if message.note == '21':
+            if message.note == 21:
                 break
             
             #stops timer, counting the delta of ticks and assigning time
             end = datetime.now()
-
             #gets the difference from start to end in ms and converts to seconds
+            miliseconds = (end-start).microseconds//1000
             seconds = (end-start).microseconds//1000000
 
             #converts seconds to ticks
-            ticks = mido.second2tick(seconds)
+            ticks = int(miliseconds // 2.604)
             msg = message.copy(time=ticks)
+            print("ticks: ", ticks)
+            print("msg: ", msg)
 
             #adds to events which can be plugged into key detection
             events.append(msg)
 
             #if its been 10 (20,30...) seconds then write the file to midi
-            if seconds % 10 == 0:
-                write_file(events)
+            """ if seconds != 0 and seconds % 10 == 0:
+                print("seconds: ", seconds)
+                write_file(events) """
     
+    write_file(events)       
     print(events)
 
 main()

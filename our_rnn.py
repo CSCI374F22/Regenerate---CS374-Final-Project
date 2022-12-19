@@ -256,7 +256,7 @@ def prepreocessing():
 
         prev_start = start
 
-    res.tempos.add(qpm=60)
+    res.tempos.add(qpm=120)
 
     note_seq.sequence_proto_to_midi_file(res, 'generated_piece.mid')
 
@@ -316,7 +316,7 @@ def extract_notes(note_sequence):
         add_to_dict(notes, 'duration', duration)
     
     # return notes dictionary (as pd frame)
-    return pd.DataFrame({name: np.array(value) for name, value in notes.items()}) # copied
+    return pd.DataFrame({name: np.array(value) for name, value in notes.items()})
 
 # adds key, value pairs to dictionary
 def add_to_dict( dictionary, key, value):

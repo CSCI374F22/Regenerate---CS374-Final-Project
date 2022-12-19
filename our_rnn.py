@@ -406,7 +406,12 @@ def prepreocessing():
 
     key_order = ['pitch', 'step', 'duration']
     
-    input_notes = np.stack([all_note_sequences[0][key] for key in key_order], axis=1)
+    input_notes = np.stack([all_note_sequences[key][:32] for key in key_order], axis=1)
+    print("input notes: ", input_notes)
+    print("all notes: ", all_note_sequences)
+    #input_notes = [all_note_sequences[1]]
+    print("input notes: ", input_notes)
+
 
     # normalize inputs
     """ input_notes = (
@@ -421,10 +426,10 @@ def prepreocessing():
         # get generated pitch, step, duration
         #print("input notes: ", input_notes)
         pitch = predict_pitch(model, input_notes) * 2
-        if (i % 2 == 0):
-            pitch = pitch + 4
+        """ if (i % 2 == 0):
+            #pitch = pitch + 4 """
         step = predict_step(model2, input_notes)
-        duration = predict_pitch(model3, input_notes)
+        duration = predict_duration(model3, input_notes)
 
         
         start = prev_start + step
